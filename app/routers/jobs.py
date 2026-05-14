@@ -13,7 +13,8 @@ from app.analyzer import extract_text_from_pdf, analyze_resume_against_jd
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 VALID_STATUSES = ["applied", "interview", "offer", "rejected", "ghosted"]
-UPLOAD_DIR = "uploads"
+UPLOAD_DIR = "/tmp/uploads" if os.getenv("RENDER") else "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 

@@ -12,7 +12,8 @@ import os
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
-os.makedirs("uploads", exist_ok=True)
+UPLOAD_DIR = "/tmp/uploads" if os.getenv("RENDER") else "uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs("static", exist_ok=True)
 
 app = FastAPI(
