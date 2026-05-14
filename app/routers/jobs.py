@@ -72,8 +72,6 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
 @router.patch("/{job_id}", response_model=JobResponse)
 async def update_job(
     job_id:  int,
-    company:  str              = Form(...),
-    role:     str              = Form(...),
     status:  Optional[str] = Form(None),
     notes:   Optional[str] = Form(None),
     jd_text: Optional[str] = Form(None),
@@ -94,8 +92,7 @@ async def update_job(
             detail=f"Invalid status. Choose from: {VALID_STATUSES}"
         )
 
-    if company  is not None: job.company  = company
-    if role     is not None: job.role = role
+
     if status   is not None: job.status   = status
     if notes    is not None: job.notes    = notes
     if jd_text  is not None: job.jd_text  = jd_text

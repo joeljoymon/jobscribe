@@ -1,4 +1,4 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
 
@@ -30,6 +30,8 @@ class JobResponse(BaseModel):
     Includes everything — including the analysis
     result from Gemini if it exists.
     """
+    model_config = ConfigDict(from_attributes=True)
+     
     id:          int
     company:     str
     role:        str
@@ -41,8 +43,6 @@ class JobResponse(BaseModel):
     notes:       Optional[str]
     applied_at:  datetime
 
-    class Config:
-        from_attributes = True
 
 class AnalysisResponse(BaseModel):
     """

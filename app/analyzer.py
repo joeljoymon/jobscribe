@@ -1,6 +1,6 @@
 import os
 import json
-import PyPDF2
+import pypdf
 from groq import Groq
 from dotenv import load_dotenv
 
@@ -19,7 +19,7 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     """
     text = ""
     with open(pdf_path, "rb") as file:
-        reader = PyPDF2.PdfReader(file)
+        reader = pypdf.PdfReader(file)
         for page in reader.pages:
             text += page.extract_text() or ""
     return text.strip()
