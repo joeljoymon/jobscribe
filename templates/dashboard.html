@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+    <h1 class="page-title" style="margin-bottom:0;">My Applications</h1>
+    <a href="/add-job" class="btn btn-primary">+ Add Job</a>
+</div>
+
+{% if jobs %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Company</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Match</th>
+            <th>Applied</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for job in jobs %}
+        <tr>
+            <td>{{ job.id }}</td>
+            <td><strong>{{ job.company }}</strong></td>
+            <td>{{ job.role }}</td>
+            <td>
+                <span class="badge badge-{{ job.status }}">
+                    {{ job.status }}
+                </span>
+            </td>
+            <td>
+                {% if job.analysis %}
+                    {% set analysis = job.analysis | fromjson %}
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <div class="score-bar-track" style="width:80px;">
+                            <div class="score-bar-fill"
+                                 style="width:{{ analysis.match_score }}%">
+                            </div>
+                        </div>
+                        <span style="font-size:0.85rem; font-weight:600;">
+                            {{ analysis.match_score }}%
+                        </span>
+                    </div>
+                {% else %}
+                    <span style="color:#ccc; font-size:0.85rem;">not analysed</span>
+                {% endif %}
+            </td>
+            <td style="color:#888; font-size:0.85rem;">
+                {{ job.applied_at.strftime('%d %b %Y') }}
+            </td>
+            <td>
+                <a href="/jobs/{{ job.id }}/detail" class="btn btn-blue"
+                   style="font-size:0.8rem; padding:0.3rem 0.8rem;">
+                    View
+                </a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% else %}
+<div class="empty-state card">
+    <h3>No applications yet</h3>
+    <p>Start tracking your job search by adding your first application.</p>
+    <br>
+    <a href="/add-job" class="btn btn-primary">+ Add Your First Job</a>
+</div>
+{% endif %}
+
+{% endblock %}
