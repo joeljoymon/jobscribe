@@ -1,11 +1,12 @@
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from app.database import engine, Base
 from app.routers import jobs
+from dotenv import load_dotenv
 import os
 
-Base.metadata.create_all(bind=engine)
+load_dotenv()  # reads .env file and loads variables into environment
 
+Base.metadata.create_all(bind=engine)
 os.makedirs("uploads", exist_ok=True)
 
 app = FastAPI(
