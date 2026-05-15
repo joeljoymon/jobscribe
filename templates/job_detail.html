@@ -9,9 +9,12 @@
 
 <!-- Job Header -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+    <div style="display:flex; justify-content:space-between;
+                align-items:flex-start; flex-wrap:wrap; gap:1rem;">
         <div>
-            <h1 style="font-size:1.5rem; margin-bottom:0.3rem;">{{ job.role }}</h1>
+            <h1 style="font-size:1.5rem; margin-bottom:0.3rem;">
+                {{ job.role }}
+            </h1>
             <p style="color:#666; font-size:1.1rem;">{{ job.company }}</p>
             {% if job.job_url %}
             <a href="{{ job.job_url }}" target="_blank"
@@ -20,125 +23,208 @@
             </a>
             {% endif %}
         </div>
-        <span class="badge badge-{{ job.status }}" style="font-size:0.85rem;">
-            {{ job.status }}
-        </span>
+        <div style="display:flex; flex-direction:column;
+                    align-items:flex-end; gap:0.5rem;">
+            <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
+            {% if job.readiness_score %}
+            <span style="font-size:0.85rem; color:#888;">
+                Readiness: <strong>{{ job.readiness_score }}%</strong>
+            </span>
+            {% endif %}
+        </div>
     </div>
 
     <hr style="margin:1rem 0; border:none; border-top:1px solid #f0f0f0;">
 
-    <!-- Update Status Form -->
-    <form id="statusForm" style="display:flex; gap:0.8rem; align-items:center;">
-        <label style="margin:0; white-space:nowrap;">Update status:</label>
+    <!-- Update Status -->
+    <div style="display:flex; gap:0.8rem; align-items:center; flex-wrap:wrap;">
+        <label style="margin:0; white-space:nowrap; font-size:0.9rem;">
+            Update status:
+        </label>
         <select id="statusSelect" style="max-width:180px;">
-            {% for s in ['applied','interview','offer','rejected','ghosted'] %}
-            <option value="{{ s }}" {% if s == job.status %}selected{% endif %}>
+            {% for s in ['interested','researched','assessed','preparing',
+                         'ready','applied','interview','offer',
+                         'rejected','ghosted','withdrawn'] %}
+            <option value="{{ s }}"
+                {% if s == job.status %}selected{% endif %}>
                 {{ s }}
             </option>
             {% endfor %}
         </select>
-        <button type="button" class="btn btn-primary" onclick="updateStatus()">
+        <button type="button" class="btn btn-primary"
+                onclick="updateStatus()">
             Save
         </button>
-    </form>
+    </div>
 </div>
 
-<!-- Analysis Report -->
-{% if analysis %}
+<!-- V2 Intelligence Workflow -->
 <div class="card" style="margin-bottom:1.5rem;">
-    <h2 style="font-size:1.1rem; margin-bottom:1rem;">AI Analysis Report</h2>
+    <h2 style="font-size:1.1rem; margin-bottom:0.3rem;">
+        Intelligence Workflow
+    </h2>
+    <p style="color:#888; font-size:0.85rem; margin-bottom:1.2rem;">
+        Follow these steps in order before applying.
+    </p>
 
-    <!-- Match Score -->
-    <div style="margin-bottom:1.5rem;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
-            <span style="font-weight:600;">Match Score</span>
-            <span style="font-weight:700; font-size:1.2rem;
-                  color:{% if analysis.match_score >= 70 %}#065f46
-                        {% elif analysis.match_score >= 50 %}#92400e
-                        {% else %}#991b1b{% endif %}">
-                {{ analysis.match_score }}%
-            </span>
+    <div style="display:grid;
+                grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+                gap:1rem;">
+
+        <!-- Step 1: Research -->
+        <div style="border:1px solid #e5e7eb; border-radius:10px;
+                    padding:1rem; text-align:center;">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">🔍</div>
+            <div style="font-weight:600; margin-bottom:0.3rem;">
+                Step 1
+            </div>
+            <div style="font-size:0.85rem; color:#666; margin-bottom:0.8rem;">
+                Research Company
+            </div>
+            <button class="btn btn-primary"
+                    style="font-size:0.8rem; width:100%;"
+                    onclick="runStep('research')">
+                Research
+            </button>
         </div>
-        <div class="score-bar-track">
-            <div class="score-bar-fill" style="width:{{ analysis.match_score }}%"></div>
+
+        <!-- Step 2: Assess -->
+        <div style="border:1px solid #e5e7eb; border-radius:10px;
+                    padding:1rem; text-align:center;">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">📊</div>
+            <div style="font-weight:600; margin-bottom:0.3rem;">
+                Step 2
+            </div>
+            <div style="font-size:0.85rem; color:#666; margin-bottom:0.8rem;">
+                Check Readiness
+            </div>
+            <button class="btn btn-primary"
+                    style="font-size:0.8rem; width:100%;"
+                    onclick="runStep('assess')">
+                Assess
+            </button>
         </div>
-        <p style="margin-top:0.4rem; font-size:0.85rem; color:#888;">
-            {{ analysis.experience_match }}
-        </p>
+
+        <!-- Step 3: Roadmap -->
+        <div style="border:1px solid #e5e7eb; border-radius:10px;
+                    padding:1rem; text-align:center;">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">🗺️</div>
+            <div style="font-weight:600; margin-bottom:0.3rem;">
+                Step 3
+            </div>
+            <div style="font-size:0.85rem; color:#666; margin-bottom:0.8rem;">
+                Get Prep Plan
+            </div>
+            <button class="btn btn-primary"
+                    style="font-size:0.8rem; width:100%;"
+                    onclick="runStep('roadmap')">
+                Generate
+            </button>
+        </div>
+
+        <!-- Step 4: Simulate -->
+        <div style="border:1px solid #e5e7eb; border-radius:10px;
+                    padding:1rem; text-align:center;">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">🎯</div>
+            <div style="font-weight:600; margin-bottom:0.3rem;">
+                Step 4
+            </div>
+            <div style="font-size:0.85rem; color:#666; margin-bottom:0.8rem;">
+                Interview Prep
+            </div>
+            <button class="btn btn-primary"
+                    style="font-size:0.8rem; width:100%;"
+                    onclick="runStep('simulate')">
+                Simulate
+            </button>
+        </div>
+
     </div>
 
-    <!-- Verdict -->
-    <div style="background:#f8f9fa; border-left:4px solid #4cc9f0;
-                padding:1rem; border-radius:0 8px 8px 0; margin-bottom:1.5rem;">
-        <p style="font-size:0.95rem; color:#444;">{{ analysis.verdict }}</p>
-    </div>
+    <!-- Result display area -->
+    <div id="stepResult" style="margin-top:1.5rem;"></div>
+</div>
 
-    <!-- Skills Grid -->
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
-        <div>
-            <h3 style="font-size:0.9rem; margin-bottom:0.6rem; color:#065f46;">
-                ✔ Matched Skills
-            </h3>
-            {% for skill in analysis.matched_skills %}
-                <span class="tag tag-green">{{ skill }}</span>
-            {% endfor %}
-        </div>
-        <div>
-            <h3 style="font-size:0.9rem; margin-bottom:0.6rem; color:#991b1b;">
-                ✗ Missing Skills
-            </h3>
-            {% for skill in analysis.missing_skills %}
-                <span class="tag tag-red">{{ skill }}</span>
-            {% endfor %}
-        </div>
-    </div>
+<!-- V1 Skill Gap Analysis -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1.1rem; margin-bottom:1rem;">
+        Skill Gap Analysis
+    </h2>
 
-    <!-- Preparation Tips -->
-    <div style="margin-bottom:1.5rem;">
-        <h3 style="font-size:0.9rem; margin-bottom:0.6rem;">📋 Preparation Tips</h3>
-        <ul style="padding-left:1.2rem;">
-            {% for tip in analysis.preparation_tips %}
-            <li style="margin-bottom:0.4rem; font-size:0.9rem; color:#444;">
-                {{ tip }}
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-
-    <!-- Interview Questions -->
+    {% if analysis %}
     <div>
-        <h3 style="font-size:0.9rem; margin-bottom:0.6rem;">🎯 Likely Interview Questions</h3>
-        <ol style="padding-left:1.2rem;">
-            {% for q in analysis.interview_questions %}
-            <li style="margin-bottom:0.6rem; font-size:0.9rem; color:#444;">{{ q }}</li>
-            {% endfor %}
-        </ol>
+        <!-- Match Score -->
+        <div style="margin-bottom:1.2rem;">
+            <div style="display:flex; justify-content:space-between;
+                        margin-bottom:0.4rem;">
+                <span style="font-weight:600;">Resume Match Score</span>
+                <span style="font-weight:700; font-size:1.1rem;
+                      color:{% if analysis.match_score >= 70 %}#065f46
+                            {% elif analysis.match_score >= 50 %}#92400e
+                            {% else %}#991b1b{% endif %}">
+                    {{ analysis.match_score }}%
+                </span>
+            </div>
+            <div class="score-bar-track">
+                <div class="score-bar-fill"
+                     style="width:{{ analysis.match_score }}%">
+                </div>
+            </div>
+        </div>
+
+        <!-- Verdict -->
+        <div style="background:#f8f9fa; border-left:4px solid #4cc9f0;
+                    padding:1rem; border-radius:0 8px 8px 0;
+                    margin-bottom:1.2rem;">
+            <p style="font-size:0.95rem; color:#444;">
+                {{ analysis.verdict }}
+            </p>
+        </div>
+
+        <!-- Skills -->
+        <div style="display:grid; grid-template-columns:1fr 1fr;
+                    gap:1rem; margin-bottom:1.2rem;">
+            <div>
+                <h3 style="font-size:0.9rem; margin-bottom:0.5rem;
+                            color:#065f46;">✔ Matched Skills</h3>
+                {% for skill in analysis.matched_skills %}
+                    <span class="tag tag-green">{{ skill }}</span>
+                {% endfor %}
+            </div>
+            <div>
+                <h3 style="font-size:0.9rem; margin-bottom:0.5rem;
+                            color:#991b1b;">✗ Missing Skills</h3>
+                {% for skill in analysis.missing_skills %}
+                    <span class="tag tag-red">{{ skill }}</span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Interview Questions -->
+        {% if analysis.interview_questions %}
+        <div>
+            <h3 style="font-size:0.9rem; margin-bottom:0.6rem;">
+                🎯 Likely Interview Questions
+            </h3>
+            <ol style="padding-left:1.2rem;">
+                {% for q in analysis.interview_questions %}
+                <li style="margin-bottom:0.5rem; font-size:0.9rem;
+                            color:#444;">{{ q }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
     </div>
-</div>
 
-{% else %}
-<!-- No analysis yet -->
-<div class="card" style="margin-bottom:1.5rem;">
-    <h2 style="font-size:1.1rem; margin-bottom:1rem;">AI Analysis</h2>
-
-    {% if not job.jd_text %}
-    <p style="color:#888; margin-bottom:1rem;">
-        No job description added yet. Update the job with a JD first.
-    </p>
-    {% elif not job.resume_path %}
-    <p style="color:#888; margin-bottom:1rem;">
-        No resume uploaded yet. Upload your resume below then run analysis.
-    </p>
     {% else %}
     <p style="color:#888; margin-bottom:1rem;">
-        Resume and JD ready. Click below to run AI analysis.
+        No skill gap analysis yet. Upload your resume and run analysis.
     </p>
     <button class="btn btn-primary" onclick="runAnalysis()">
-        Run AI Analysis
+        Run Skill Gap Analysis
     </button>
     {% endif %}
 </div>
-{% endif %}
 
 <!-- Resume Upload -->
 <div class="card">
@@ -147,17 +233,16 @@
     </h2>
     {% if job.resume_path %}
     <p style="color:#888; font-size:0.85rem; margin-bottom:1rem;">
-        Resume uploaded. Upload again to replace it.
+        Resume on file. Upload again to replace it.
     </p>
     {% endif %}
-    <form id="resumeForm">
-        <div class="form-group">
-            <input type="file" id="resumeFile" accept=".pdf">
-        </div>
-        <button type="button" class="btn btn-primary" onclick="uploadResume()">
-            Upload PDF
-        </button>
-    </form>
+    <div class="form-group">
+        <input type="file" id="resumeFile" accept=".pdf">
+    </div>
+    <button type="button" class="btn btn-primary"
+            onclick="uploadResume()">
+        Upload PDF
+    </button>
     <div id="uploadMsg" style="margin-top:0.8rem; font-size:0.9rem;"></div>
 </div>
 
@@ -168,38 +253,28 @@ async function updateStatus() {
     const status = document.getElementById('statusSelect').value;
     const formData = new FormData();
     formData.append('status', status);
-
     const res = await fetch(`/jobs/${jobId}`, {
-        method: 'PATCH',
-        body: formData
+        method: 'PATCH', body: formData
     });
-    if (res.ok) {
-        window.location.reload();
-    }
+    if (res.ok) window.location.reload();
 }
 
 async function uploadResume() {
     const file = document.getElementById('resumeFile').files[0];
-    if (!file) {
-        document.getElementById('uploadMsg').textContent = 'Please select a PDF file.';
-        return;
-    }
+    if (!file) return;
     const formData = new FormData();
     formData.append('resume', file);
-
     const res = await fetch(`/jobs/${jobId}/upload-resume`, {
-        method: 'POST',
-        body: formData
+        method: 'POST', body: formData
     });
-
     const msg = document.getElementById('uploadMsg');
     if (res.ok) {
         msg.style.color = '#065f46';
-        msg.textContent = 'Resume uploaded successfully. You can now run analysis.';
+        msg.textContent = 'Resume uploaded. You can now run analysis.';
         setTimeout(() => window.location.reload(), 1500);
     } else {
         msg.style.color = '#991b1b';
-        msg.textContent = 'Upload failed. Make sure the file is a PDF.';
+        msg.textContent = 'Upload failed. Make sure file is a PDF.';
     }
 }
 
@@ -207,16 +282,60 @@ async function runAnalysis() {
     const btn = event.target;
     btn.textContent = 'Analysing...';
     btn.disabled = true;
-
     const res = await fetch(`/jobs/${jobId}/analyze`, { method: 'POST' });
     if (res.ok) {
         window.location.reload();
     } else {
         const data = await res.json();
-        btn.textContent = 'Run AI Analysis';
+        btn.textContent = 'Run Skill Gap Analysis';
         btn.disabled = false;
-        alert('Analysis failed: ' + data.detail);
+        alert('Failed: ' + data.detail);
     }
+}
+
+async function runStep(step) {
+    const resultDiv = document.getElementById('stepResult');
+    const endpoints = {
+        'research': `/intelligence/jobs/${jobId}/research`,
+        'assess':   `/intelligence/jobs/${jobId}/assess`,
+        'roadmap':  `/intelligence/jobs/${jobId}/roadmap`,
+        'simulate': `/intelligence/jobs/${jobId}/simulate`
+    };
+
+    const labels = {
+        'research': 'Researching company...',
+        'assess':   'Assessing your readiness...',
+        'roadmap':  'Generating preparation plan...',
+        'simulate': 'Generating interview questions...'
+    };
+
+    resultDiv.innerHTML = `
+        <div style="text-align:center; padding:2rem; color:#888;">
+            <div style="font-size:1.5rem; margin-bottom:0.5rem;">⏳</div>
+            ${labels[step]}
+        </div>`;
+
+    const res = await fetch(endpoints[step], { method: 'POST' });
+    const data = await res.json();
+
+    if (!res.ok) {
+        resultDiv.innerHTML = `
+            <div style="background:#fee2e2; padding:1rem;
+                        border-radius:8px; color:#991b1b;">
+                Error: ${data.detail}
+            </div>`;
+        return;
+    }
+
+    // Redirect to dedicated result pages
+    const redirects = {
+        'research': `/jobs/${jobId}/research-result`,
+        'assess':   `/jobs/${jobId}/assessment-result`,
+        'roadmap':  `/jobs/${jobId}/roadmap-result`,
+        'simulate': `/jobs/${jobId}/simulator`
+    };
+
+    window.location.href = redirects[step];
 }
 </script>
 

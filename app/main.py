@@ -88,3 +88,153 @@ def add_job_page(request: Request):
         name="add_job.html",
         context={}
     )
+
+@app.get("/jobs/{job_id}/research-result", response_class=HTMLResponse)
+def research_result(request: Request, job_id: int):
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return HTMLResponse("<h2>Job not found</h2>", status_code=404)
+        from app.models import CompanyResearch
+        research = db.query(CompanyResearch).filter(
+            CompanyResearch.company_name == job.company
+        ).first()
+    finally:
+        db.close()
+
+    if not research:
+        return HTMLResponse("<h2>No research found. Run research first.</h2>")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="research.html",
+        context={
+            "job": job,
+            "research": json.loads(research.raw_research),
+            "cached": False
+        }
+    )
+
+
+@app.get("/jobs/{job_id}/assessment-result", response_class=HTMLResponse)
+def assessment_result(request: Request, job_id: int):
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return HTMLResponse("<h2>Job not found</h2>", status_code=404)
+        from app.models import ReadinessAssessment
+        assessment = db.query(ReadinessAssessment).filter(
+            ReadinessAssessment.job_id == job_id
+        ).order_by(ReadinessAssessment.assessed_at.desc()).first()
+    finally:
+        db.close()
+
+    if not assessment:
+        return HTMLResponse("<h2>No assessment found. Run assess first.</h2>")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="assessment.html",
+        context={
+            "job": job,
+            "assessment": json.loads(assessment.full_assessment)
+        }
+    )
+
+
+@app.get("/jobs/{job_id}/roadmap-result", response_class=HTMLResponse)
+def roadmap_result(request: Request, job_id: int):
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return HTMLResponse("<h2>Job not found</h2>", status_code=404)
+        from app.models import PrepRoadmap
+        roadmap = db.query(PrepRoadmap).filter(
+            PrepRoadmap.job_id == job_id
+        ).first()
+    finally:
+        db.close()
+
+    if not roadmap:
+        return HTMLResponse("<h2>No roadmap found. Generate roadmap first.</h2>")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="roadmap.html",
+        context={
+            "job": job,
+            "roadmap": json.loads(roadmap.roadmap_json)
+        }
+    )
+
+
+@app.get("/jobs/{job_id}/simulator", response_class=HTMLResponse)
+def simulator_page(request: Request, job_id: int):
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return HTMLResponse("<h2>Job not found</h2>", status_code=404)
+        from app.models import InterviewQuestion
+        questions = db.query(InterviewQuestion).filter(
+            InterviewQuestion.job_id == job_id
+        ).all()
+    finally:
+        db.close()
+
+    if not questions:
+        return HTMLResponse("<h2>No questions found. Run simulator first.</h2>")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="simulator.html",
+        context={
+            "job": job,
+            "questions": questions
+        }
+    )
+
+
+@app.get("/analytics", response_class=HTMLResponse)
+def analytics_page(request: Request):
+    db = SessionLocal()
+    try:
+        all_jobs = db.query(Job).all()
+    finally:
+        db.close()
+
+    if len(all_jobs) < 3:
+        analytics = {
+            "message": "Add at least 3 job applications to see patterns.",
+            "total_jobs": len(all_jobs)
+        }
+    else:
+        from app.models import ReadinessAssessment
+        from app.analyzer import analyze_outcomes
+        jobs_summary = []
+        db2 = SessionLocal()
+        try:
+            for job in all_jobs:
+                latest = db2.query(ReadinessAssessment).filter(
+                    ReadinessAssessment.job_id == job.id
+                ).order_by(ReadinessAssessment.assessed_at.desc()).first()
+                jobs_summary.append({
+                    "company":         job.company,
+                    "role":            job.role,
+                    "status":          job.status,
+                    "readiness_score": job.readiness_score,
+                    "match_score":     json.loads(job.analysis).get("match_score")
+                                       if job.analysis else None,
+                })
+        finally:
+            db2.close()
+        analytics = {"analytics": analyze_outcomes(jobs_summary)}
+
+    return templates.TemplateResponse(
+        request=request,
+        name="analytics.html",
+        context={"analytics": analytics}
+    )

@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+<div style="display:flex; justify-content:space-between;
+            align-items:center; margin-bottom:1.5rem;">
     <h1 class="page-title" style="margin-bottom:0;">My Applications</h1>
     <a href="/add-job" class="btn btn-primary">+ Add Job</a>
 </div>
@@ -14,8 +15,9 @@
             <th>Company</th>
             <th>Role</th>
             <th>Status</th>
+            <th>Readiness</th>
             <th>Match</th>
-            <th>Applied</th>
+            <th>Added</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -30,11 +32,39 @@
                     {{ job.status }}
                 </span>
             </td>
+
+            <!-- Readiness Score (V2) -->
+            <td>
+                {% if job.readiness_score %}
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <div class="score-bar-track" style="width:60px;">
+                            <div class="score-bar-fill"
+                                 style="width:{{ job.readiness_score }}%;
+                                 background:
+                                 {% if job.readiness_score >= 70 %}
+                                     linear-gradient(90deg,#6ee7b7,#059669)
+                                 {% elif job.readiness_score >= 50 %}
+                                     linear-gradient(90deg,#fcd34d,#d97706)
+                                 {% else %}
+                                     linear-gradient(90deg,#fca5a5,#dc2626)
+                                 {% endif %}">
+                            </div>
+                        </div>
+                        <span style="font-size:0.85rem; font-weight:600;">
+                            {{ job.readiness_score }}%
+                        </span>
+                    </div>
+                {% else %}
+                    <span style="color:#ccc; font-size:0.8rem;">not assessed</span>
+                {% endif %}
+            </td>
+
+            <!-- Match Score (V1) -->
             <td>
                 {% if job.analysis %}
                     {% set analysis = job.analysis | fromjson %}
                     <div style="display:flex; align-items:center; gap:0.5rem;">
-                        <div class="score-bar-track" style="width:80px;">
+                        <div class="score-bar-track" style="width:60px;">
                             <div class="score-bar-fill"
                                  style="width:{{ analysis.match_score }}%">
                             </div>
@@ -44,14 +74,16 @@
                         </span>
                     </div>
                 {% else %}
-                    <span style="color:#ccc; font-size:0.85rem;">not analysed</span>
+                    <span style="color:#ccc; font-size:0.8rem;">not analysed</span>
                 {% endif %}
             </td>
+
             <td style="color:#888; font-size:0.85rem;">
                 {{ job.applied_at.strftime('%d %b %Y') }}
             </td>
             <td>
-                <a href="/jobs/{{ job.id }}/detail" class="btn btn-blue"
+                <a href="/jobs/{{ job.id }}/detail"
+                   class="btn btn-blue"
                    style="font-size:0.8rem; padding:0.3rem 0.8rem;">
                     View
                 </a>
@@ -64,7 +96,7 @@
 {% else %}
 <div class="empty-state card">
     <h3>No applications yet</h3>
-    <p>Start tracking your job search by adding your first application.</p>
+    <p>Start by adding a job you're interested in — even before you apply.</p>
     <br>
     <a href="/add-job" class="btn btn-primary">+ Add Your First Job</a>
 </div>

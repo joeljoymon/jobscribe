@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1 class="page-title">Application Analytics</h1>
+
+{% if analytics.message %}
+<div class="card empty-state">
+    <h3>Not enough data yet</h3>
+    <p>{{ analytics.message }}</p>
+    <p style="margin-top:0.5rem; color:#aaa; font-size:0.85rem;">
+        Total applications: {{ analytics.total_jobs }}
+    </p>
+    <br>
+    <a href="/add-job" class="btn btn-primary">+ Add More Jobs</a>
+</div>
+
+{% else %}
+<!-- Summary Stats -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+            gap:1rem; margin-bottom:1.5rem;">
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#1a1a2e;">
+            {{ analytics.analytics.total_applications }}
+        </div>
+        <div style="font-size:0.85rem; color:#888; margin-top:0.3rem;">
+            Total Applications
+        </div>
+    </div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2rem; font-weight:700; color:#059669;">
+            {{ analytics.analytics.callback_rate }}
+        </div>
+        <div style="font-size:0.85rem; color:#888; margin-top:0.3rem;">
+            Callback Rate
+        </div>
+    </div>
+</div>
+
+<!-- What's Working -->
+<div style="display:grid; grid-template-columns:1fr 1fr;
+            gap:1rem; margin-bottom:1.5rem;">
+    <div class="card">
+        <h2 style="font-size:1rem; color:#065f46; margin-bottom:0.8rem;">
+            ✔ What's Working
+        </h2>
+        <ul style="padding-left:1.2rem;">
+            {% for item in analytics.analytics.what_is_working %}
+            <li style="margin-bottom:0.4rem; font-size:0.9rem;
+                        color:#444;">{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="card">
+        <h2 style="font-size:1rem; color:#991b1b; margin-bottom:0.8rem;">
+            ✗ What's Not Working
+        </h2>
+        <ul style="padding-left:1.2rem;">
+            {% for item in analytics.analytics.what_is_not_working %}
+            <li style="margin-bottom:0.4rem; font-size:0.9rem;
+                        color:#444;">{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Recommendations -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.8rem;">
+        RECOMMENDED FOCUS
+    </h2>
+    <p style="color:#444; margin-bottom:1.5rem;">
+        {{ analytics.analytics.recommended_focus }}
+    </p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+        <div>
+            <h3 style="font-size:0.9rem; color:#991b1b; margin-bottom:0.6rem;">
+                Roles to Avoid Right Now
+            </h3>
+            {% for role in analytics.analytics.roles_to_avoid_now %}
+            <span class="tag tag-red">{{ role }}</span>
+            {% endfor %}
+        </div>
+        <div>
+            <h3 style="font-size:0.9rem; color:#065f46; margin-bottom:0.6rem;">
+                Roles to Target
+            </h3>
+            {% for role in analytics.analytics.roles_to_target %}
+            <span class="tag tag-green">{{ role }}</span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Honest Summary -->
+<div class="card" style="border-left:4px solid #4cc9f0;">
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.5rem;">
+        HONEST ASSESSMENT
+    </h2>
+    <p style="color:#444; line-height:1.7;">
+        {{ analytics.analytics.honest_summary }}
+    </p>
+</div>
+{% endif %}
+
+{% endblock %}

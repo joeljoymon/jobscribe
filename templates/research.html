@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="margin-bottom:1rem;">
+    <a href="/jobs/{{ job.id }}/detail"
+       style="color:#888; text-decoration:none; font-size:0.9rem;">
+        ← Back to {{ job.company }} — {{ job.role }}
+    </a>
+</div>
+
+<h1 class="page-title">Company Research: {{ job.company }}</h1>
+
+{% if cached %}
+<div style="background:#f0fdf4; border:1px solid #bbf7d0;
+            padding:0.6rem 1rem; border-radius:8px;
+            margin-bottom:1.5rem; font-size:0.85rem; color:#065f46;">
+    ⚡ Loaded from cache — this company was researched before.
+</div>
+{% endif %}
+
+<!-- What they do -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.5rem;">
+        COMPANY TYPE
+    </h2>
+    <p style="font-size:1.1rem; font-weight:600; margin-bottom:1rem;">
+        {{ research.company_type | title }}
+    </p>
+
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.5rem;">
+        WHAT THEY DO
+    </h2>
+    <p style="color:#444; margin-bottom:1rem;">{{ research.what_they_do }}</p>
+
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.5rem;">
+        YOUR ROLE DAY TO DAY
+    </h2>
+    <p style="color:#444;">{{ research.role_summary }}</p>
+</div>
+
+<!-- Interview Style -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.5rem;">
+        INTERVIEW STYLE
+    </h2>
+    <p style="color:#444; margin-bottom:1.5rem;">
+        {{ research.interview_style }}
+    </p>
+
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.8rem;">
+        CS TOPICS TESTED
+    </h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+                gap:0.8rem;">
+        {% for topic, level in research.cs_topics.items() %}
+        <div style="border:1px solid #e5e7eb; border-radius:8px; padding:0.8rem;">
+            <div style="font-weight:600; font-size:0.9rem; margin-bottom:0.3rem;">
+                {{ topic }}
+            </div>
+            <span class="badge
+                {% if level == 'heavy' %}badge-rejected
+                {% elif level == 'medium' %}badge-interview
+                {% elif level == 'light' %}badge-applied
+                {% else %}badge-ghosted{% endif %}"
+                style="font-size:0.75rem;">
+                {{ level }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Fresher Expectations -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.5rem;">
+        WHAT FRESHERS ARE EXPECTED TO KNOW
+    </h2>
+    <p style="color:#444; margin-bottom:1.5rem;">
+        {{ research.fresher_expectations }}
+    </p>
+
+    <h2 style="font-size:1rem; color:#888; margin-bottom:0.5rem;">
+        TIPS FOR APPLYING
+    </h2>
+    <p style="color:#444;">{{ research.apply_tips }}</p>
+</div>
+
+<div style="display:flex; gap:1rem;">
+    <a href="/jobs/{{ job.id }}/detail" class="btn btn-primary">
+        ← Back to Job
+    </a>
+    <button class="btn btn-blue" onclick="runAssess()">
+        Check My Readiness →
+    </button>
+</div>
+
+<script>
+async function runAssess() {
+    const btn = event.target;
+    btn.textContent = 'Assessing...';
+    btn.disabled = true;
+    const res = await fetch(`/intelligence/jobs/{{ job.id }}/assess`,
+                            { method: 'POST' });
+    if (res.ok) {
+        window.location.href = `/jobs/{{ job.id }}/assessment-result`;
+    } else {
+        const data = await res.json();
+        btn.textContent = 'Check My Readiness →';
+        btn.disabled = false;
+        alert('Error: ' + data.detail);
+    }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div style="margin-bottom:1rem;">
+    <a href="/jobs/{{ job.id }}/detail"
+       style="color:#888; text-decoration:none; font-size:0.9rem;">
+        ← Back to {{ job.company }} — {{ job.role }}
+    </a>
+</div>
+
+<h1 class="page-title">
+    {{ roadmap.total_days }}-Day Preparation Plan
+</h1>
+<p style="color:#666; margin-bottom:1.5rem;">
+    {{ job.company }} — {{ job.role }}
+</p>
+
+{% for day in roadmap.daily_plan %}
+<div class="card" style="margin-bottom:1rem;">
+    <div style="display:flex; justify-content:space-between;
+                align-items:flex-start; margin-bottom:0.8rem;">
+        <div>
+            <span style="background:#1a1a2e; color:#fff; padding:0.2rem 0.6rem;
+                         border-radius:20px; font-size:0.8rem;
+                         font-weight:600; margin-right:0.5rem;">
+                Day {{ day.day_number }}
+            </span>
+            <strong>{{ day.title }}</strong>
+        </div>
+        <span style="font-size:0.8rem; color:#888;">
+            ~{{ day.estimated_hours }} hrs
+        </span>
+    </div>
+
+    <p style="color:#4cc9f0; font-weight:600; margin-bottom:0.8rem;">
+        {{ day.focus_topic }}
+    </p>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr;
+                gap:1rem; font-size:0.9rem;">
+        <div>
+            <p style="font-weight:500; margin-bottom:0.4rem; color:#555;">
+                What to study:
+            </p>
+            <ul style="padding-left:1.2rem; color:#444;">
+                {% for item in day.what_to_study %}
+                <li style="margin-bottom:0.3rem;">{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div>
+            <p style="font-weight:500; margin-bottom:0.4rem; color:#555;">
+                Depth needed:
+            </p>
+            <p style="color:#444; margin-bottom:0.8rem;">
+                {{ day.depth_needed }}
+            </p>
+            <p style="font-weight:500; margin-bottom:0.4rem; color:#555;">
+                How to verify:
+            </p>
+            <p style="color:#444; font-style:italic;">
+                {{ day.how_to_verify }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<div class="card" style="margin-bottom:1.5rem;
+     background:#f0fdf4; border:1px solid #bbf7d0;">
+    <p style="color:#065f46; font-weight:600;">
+        🎯 Final Step: {{ roadmap.final_day_activity }}
+    </p>
+</div>
+
+<div style="display:flex; gap:1rem;">
+    <a href="/jobs/{{ job.id }}/detail" class="btn"
+       style="background:#f0f0f0; color:#444;">← Back</a>
+    <button class="btn btn-primary" onclick="runSimulator()">
+        Start Interview Simulator →
+    </button>
+</div>
+
+<script>
+async function runSimulator() {
+    const btn = event.target;
+    btn.textContent = 'Generating questions...';
+    btn.disabled = true;
+    const res = await fetch(`/intelligence/jobs/{{ job.id }}/simulate`,
+                            { method: 'POST' });
+    if (res.ok) {
+        window.location.href = `/jobs/{{ job.id }}/simulator`;
+    } else {
+        const data = await res.json();
+        btn.textContent = 'Start Interview Simulator →';
+        btn.disabled = false;
+        alert('Error: ' + data.detail);
+    }
+}
+</script>
+
+{% endblock %}
