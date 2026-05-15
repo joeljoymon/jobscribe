@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from app.database import engine, Base, SessionLocal
-from app.routers import jobs
+from app.routers import jobs, intelligence   
 from app.models import Job
 from dotenv import load_dotenv
 import json
@@ -27,6 +27,7 @@ templates = Jinja2Templates(directory="templates")
 templates.env.filters["fromjson"] = json.loads
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(jobs.router)
+app.include_router(intelligence.router) 
 
 
 @app.get("/", response_class=HTMLResponse)
