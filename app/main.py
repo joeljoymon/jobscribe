@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
-from app.database import engine, Base, SessionLocal
+from app.database import engine, Base, SessionLocal, run_migrations
 from app.routers import jobs, intelligence   
 from app.models import Job
 from dotenv import load_dotenv
@@ -12,6 +12,7 @@ import os
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
+run_migrations()   
 UPLOAD_DIR = "/tmp/uploads" if os.getenv("RENDER") else "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs("static", exist_ok=True)

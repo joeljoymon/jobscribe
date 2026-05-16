@@ -25,3 +25,32 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def run_migrations():
+    """
+    Checks for missing columns and adds them automatically.
+    This runs on every startup — safe to call multiple times.
+    Handles the case where old V1 database exists on Render.
+    """
+    import sqlite3
+
+    # Get the actual database file path
+    db_path = DATABASE_PATH
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Get existing columns in jobs table
+    cursor.execute("PRAGMA table_info(jobs)")
+    existing_columns = [row[1] for row in cursor.fetchall()]
+
+    # Add readiness_score if missing
+    if "readiness_score" not in existing_columns:
+        cursor.execute(
+            "ALTER TABLE jobs ADD COLUMN readiness_score INTEGER"
+        )
+        print("Migration: added readiness_score column to jobs table")
+
+    conn.commit()
+    conn.close()
