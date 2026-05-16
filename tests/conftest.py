@@ -47,4 +47,7 @@ def setup_database():
 
 @pytest.fixture
 def client():
+    test_client = TestClient(app)
+    # Set a fixed session cookie for all tests
+    test_client.cookies.set("jobscribe_session", "test-session-uuid-1234")
     return TestClient(app)

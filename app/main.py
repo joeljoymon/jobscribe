@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from app.database import engine, Base, SessionLocal, run_migrations
-from app.routers import jobs, intelligence   
 from app.models import Job
+from app.routers import jobs, intelligence
+from app.session import get_or_create_session_id
 from dotenv import load_dotenv
 import json
 import os
@@ -12,7 +13,8 @@ import os
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
-run_migrations()   
+run_migrations()
+
 UPLOAD_DIR = "/tmp/uploads" if os.getenv("RENDER") else "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs("static", exist_ok=True)
@@ -20,27 +22,24 @@ os.makedirs("static", exist_ok=True)
 app = FastAPI(
     title="JobScribe",
     description="Track job applications with AI-powered resume analysis",
-    version="0.1.0"
+    version="2.0.0"
 )
 
 templates = Jinja2Templates(directory="templates")
-# Custom filter — converts JSON string to dict inside templates
 templates.env.filters["fromjson"] = json.loads
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(jobs.router)
-app.include_router(intelligence.router) 
+app.include_router(intelligence.router)
 
 
 @app.get("/", response_class=HTMLResponse)
-def dashboard(request: Request):
-    """
-    Main dashboard page.
-    Fetches all jobs from the database and renders them
-    as an HTML table with status badges.
-    """
+def dashboard(request: Request, response: Response):
+    session_id = get_or_create_session_id(request, response)
     db = SessionLocal()
     try:
-        all_jobs = db.query(Job).order_by(Job.applied_at.desc()).all()
+        all_jobs = db.query(Job).filter(
+            Job.session_id == session_id
+        ).order_by(Job.applied_at.desc()).all()
     finally:
         db.close()
 
@@ -52,21 +51,20 @@ def dashboard(request: Request):
 
 
 @app.get("/jobs/{job_id}/detail", response_class=HTMLResponse)
-def job_detail(request: Request, job_id: int):
-    """
-    Detail page for one job.
-    Shows full information + parsed analysis report if available.
-    """
+def job_detail(request: Request, response: Response, job_id: int):
+    session_id = get_or_create_session_id(request, response)
     db = SessionLocal()
     try:
-        job = db.query(Job).filter(Job.id == job_id).first()
+        job = db.query(Job).filter(
+            Job.id == job_id,
+            Job.session_id == session_id
+        ).first()
     finally:
         db.close()
 
     if not job:
         return HTMLResponse("<h2>Job not found</h2>", status_code=404)
 
-    # Parse the analysis JSON string back into a dict for the template
     analysis = None
     if job.analysis:
         analysis = json.loads(job.analysis)
@@ -79,22 +77,24 @@ def job_detail(request: Request, job_id: int):
 
 
 @app.get("/add-job", response_class=HTMLResponse)
-def add_job_page(request: Request):
-    """
-    Page with a form to add a new job application.
-    On submit it calls POST /jobs/ API endpoint.
-    """
-    return templates.TemplateResponse( 
+def add_job_page(request: Request, response: Response):
+    get_or_create_session_id(request, response)
+    return templates.TemplateResponse(
         request=request,
         name="add_job.html",
         context={}
     )
 
+
 @app.get("/jobs/{job_id}/research-result", response_class=HTMLResponse)
-def research_result(request: Request, job_id: int):
+def research_result(request: Request, response: Response, job_id: int):
+    session_id = get_or_create_session_id(request, response)
     db = SessionLocal()
     try:
-        job = db.query(Job).filter(Job.id == job_id).first()
+        job = db.query(Job).filter(
+            Job.id == job_id,
+            Job.session_id == session_id
+        ).first()
         if not job:
             return HTMLResponse("<h2>Job not found</h2>", status_code=404)
         from app.models import CompanyResearch
@@ -105,7 +105,7 @@ def research_result(request: Request, job_id: int):
         db.close()
 
     if not research:
-        return HTMLResponse("<h2>No research found. Run research first.</h2>")
+        return HTMLResponse("<h2>No research found.</h2>")
 
     return templates.TemplateResponse(
         request=request,
@@ -119,10 +119,14 @@ def research_result(request: Request, job_id: int):
 
 
 @app.get("/jobs/{job_id}/assessment-result", response_class=HTMLResponse)
-def assessment_result(request: Request, job_id: int):
+def assessment_result(request: Request, response: Response, job_id: int):
+    session_id = get_or_create_session_id(request, response)
     db = SessionLocal()
     try:
-        job = db.query(Job).filter(Job.id == job_id).first()
+        job = db.query(Job).filter(
+            Job.id == job_id,
+            Job.session_id == session_id
+        ).first()
         if not job:
             return HTMLResponse("<h2>Job not found</h2>", status_code=404)
         from app.models import ReadinessAssessment
@@ -133,7 +137,7 @@ def assessment_result(request: Request, job_id: int):
         db.close()
 
     if not assessment:
-        return HTMLResponse("<h2>No assessment found. Run assess first.</h2>")
+        return HTMLResponse("<h2>No assessment found.</h2>")
 
     return templates.TemplateResponse(
         request=request,
@@ -146,10 +150,14 @@ def assessment_result(request: Request, job_id: int):
 
 
 @app.get("/jobs/{job_id}/roadmap-result", response_class=HTMLResponse)
-def roadmap_result(request: Request, job_id: int):
+def roadmap_result(request: Request, response: Response, job_id: int):
+    session_id = get_or_create_session_id(request, response)
     db = SessionLocal()
     try:
-        job = db.query(Job).filter(Job.id == job_id).first()
+        job = db.query(Job).filter(
+            Job.id == job_id,
+            Job.session_id == session_id
+        ).first()
         if not job:
             return HTMLResponse("<h2>Job not found</h2>", status_code=404)
         from app.models import PrepRoadmap
@@ -160,7 +168,7 @@ def roadmap_result(request: Request, job_id: int):
         db.close()
 
     if not roadmap:
-        return HTMLResponse("<h2>No roadmap found. Generate roadmap first.</h2>")
+        return HTMLResponse("<h2>No roadmap found.</h2>")
 
     return templates.TemplateResponse(
         request=request,
@@ -173,10 +181,14 @@ def roadmap_result(request: Request, job_id: int):
 
 
 @app.get("/jobs/{job_id}/simulator", response_class=HTMLResponse)
-def simulator_page(request: Request, job_id: int):
+def simulator_page(request: Request, response: Response, job_id: int):
+    session_id = get_or_create_session_id(request, response)
     db = SessionLocal()
     try:
-        job = db.query(Job).filter(Job.id == job_id).first()
+        job = db.query(Job).filter(
+            Job.id == job_id,
+            Job.session_id == session_id
+        ).first()
         if not job:
             return HTMLResponse("<h2>Job not found</h2>", status_code=404)
         from app.models import InterviewQuestion
@@ -187,23 +199,23 @@ def simulator_page(request: Request, job_id: int):
         db.close()
 
     if not questions:
-        return HTMLResponse("<h2>No questions found. Run simulator first.</h2>")
+        return HTMLResponse("<h2>No questions found.</h2>")
 
     return templates.TemplateResponse(
         request=request,
         name="simulator.html",
-        context={
-            "job": job,
-            "questions": questions
-        }
+        context={"job": job, "questions": questions}
     )
 
 
 @app.get("/analytics", response_class=HTMLResponse)
-def analytics_page(request: Request):
+def analytics_page(request: Request, response: Response):
+    session_id = get_or_create_session_id(request, response)
     db = SessionLocal()
     try:
-        all_jobs = db.query(Job).all()
+        all_jobs = db.query(Job).filter(
+            Job.session_id == session_id
+        ).all()
     finally:
         db.close()
 

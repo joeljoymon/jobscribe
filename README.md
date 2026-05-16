@@ -1,6 +1,7 @@
-# JobScribe
+# JobScribe V2
 
-> AI-powered job application tracker that analyzes your resume against job descriptions and tells you exactly where you stand.
+> End-to-end career intelligence platform for freshers — from deciding whether to apply, to walking into the interview confident.
+
 
 [![Run Tests](https://github.com/joeljoymon/jobscribe/actions/workflows/tests.yml/badge.svg)](https://github.com/joeljoymon/jobscribe/actions/workflows/tests.yml)
 ![Python](https://img.shields.io/badge/python-3.10-blue)
@@ -14,37 +15,52 @@
 ## The Problem
 
 Freshers apply to 20-30 companies blindly — same resume everywhere,
-no idea why they don't hear back. JobScribe fixes this by telling you
-before you apply whether your resume matches the role, and exactly
-what's missing.
+no idea why they don't hear back, no idea if they're even ready for
+the role they're applying to.
+
+JobScribe V2 answers three questions before you apply:
+1. Am I ready for this role right now?
+2. If not, how long will it take and what exactly do I study?
+3. What will they ask me in the interview?
+---
+
+## What's New in V2
+
+V1 was a job tracker with AI skill gap analysis.
+
+V2 is a full career intelligence platform:
+
+| Feature | V1 | V2 |
+|---|---|---|
+| Track applications | ✔ | ✔ |
+| Resume vs JD analysis | ✔ | ✔ |
+| Company research | ✗ | ✔ |
+| Readiness assessment | ✗ | ✔ |
+| Preparation roadmap | ✗ | ✔ |
+| Interview simulator | ✗ | ✔ |
+| Outcome analytics | ✗ | ✔ |
+| Assessment history | ✗ | ✔ |
+| Company research cache | ✗ | ✔ |
 
 ---
 
-## What It Does
+## The Full User Journey
 
-**Track** — Add every job application with company, role, JD, and status.
-Update status as things progress: applied → interview → offer.
-
-**Analyse** — Upload your resume PDF. Paste the job description.
-Llama 3.3 70B compares them and returns:
-
-- Match score (0-100%)
-- Skills you have that match
-- Skills you're missing
-- Honest verdict — should you apply?
-- 5 likely interview questions tailored to this JD and your resume
-- Preparation tips specific to the gap
-
-**Dashboard** — See all applications in one place with match scores
-and status badges.
-
----
+| Step | Action | What You Get |
+|---|---|---|
+| 1 | **Add a job** you're interested in | Job saved with status `interested` |
+| 2 | **Research the company** | What they do, interview style, which CS topics they test and at what depth |
+| 3 | **Check your readiness** | Overall score (0-100%), breakdown by category, specific gaps, honest verdict: `apply now` / `prepare first` |
+| 4 | **Follow the preparation roadmap** | Day by day study plan calibrated to your gaps and the right depth for this specific role |
+| 5 | **Run the interview simulator** | 10 questions tailored to YOUR resume and THIS JD — technical, CS fundamentals, project-specific, situation questions with answer guides |
+| 6 | **Apply with confidence** | Update status as things progress: `applied` → `interview` → `offer` |
+| 7 | **Analytics learns your patterns** | Which roles get callbacks, which don't — what to focus on next |
 
 ## Screenshots
 
-> Dashboard showing applications with match scores and status badges
+![Dashboard](screenshots/dashboard.png)
 
-> Job detail page with full AI analysis report
+![Analysis Report](screenshots/analysis.png)
 
 ---
 
@@ -57,7 +73,7 @@ and status badges.
 | AI | Llama 3.3 70B via Groq API |
 | PDF parsing | pypdf |
 | Frontend | Jinja2 templates, HTML/CSS |
-| Testing | pytest, 25 tests |
+| Testing | pytest - 48 tests with mocking |
 | CI/CD | GitHub Actions |
 | Deployment | Render |
 
@@ -94,6 +110,8 @@ uvicorn app.main:app --reload
 
 ## API Endpoints
 
+### V1 — Job Tracker
+
 | Method | Endpoint | Description |
 |---|---|---|
 | GET | `/` | Dashboard |
@@ -103,9 +121,20 @@ uvicorn app.main:app --reload
 | PATCH | `/jobs/{id}` | Update status or notes |
 | DELETE | `/jobs/{id}` | Remove application |
 | POST | `/jobs/{id}/upload-resume` | Upload resume PDF |
-| POST | `/jobs/{id}/analyze` | Run AI gap analysis |
+| POST | `/jobs/{id}/analyze` | Run V1 skill gap analysis |
 
-Full interactive API docs at `/docs`.
+### V2 — Intelligence Layer
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/intelligence/jobs/{id}/research` | Research company and role |
+| POST | `/intelligence/jobs/{id}/assess` | Run readiness assessment |
+| POST | `/intelligence/jobs/{id}/roadmap` | Generate prep roadmap |
+| POST | `/intelligence/jobs/{id}/simulate` | Generate interview questions |
+| PATCH | `/intelligence/questions/{id}/practiced` | Mark question practiced |
+| GET | `/intelligence/analytics` | Outcome pattern analysis |
+
+Full interactive docs at `/docs`.
 
 ---
 
@@ -114,43 +143,97 @@ Full interactive API docs at `/docs`.
 ```
 jobscribe/
 ├── app/
-│   ├── main.py          ← FastAPI app, HTML routes
-│   ├── models.py        ← SQLAlchemy database table
-│   ├── schemas.py       ← Pydantic request/response shapes
-│   ├── database.py      ← database connection and session
-│   ├── analyzer.py      ← Groq AI integration and PDF parsing
+│   ├── main.py              ← FastAPI app, HTML routes, auto-migration
+│   ├── models.py            ← 5 SQLAlchemy database tables
+│   ├── schemas.py           ← Pydantic request/response shapes
+│   ├── database.py          ← connection, session, migration
+│   ├── analyzer.py          ← all Groq AI functions
 │   └── routers/
-│       └── jobs.py      ← all job API endpoints
+│       ├── jobs.py          ← V1 CRUD endpoints
+│       └── intelligence.py  ← V2 intelligence endpoints
 ├── templates/
-│   ├── base.html        ← shared layout and styles
-│   ├── dashboard.html   ← applications list view
-│   ├── job_detail.html  ← full analysis report view
-│   └── add_job.html     ← add new application form
+│   ├── base.html            ← shared layout and styles
+│   ├── dashboard.html       ← applications list with summary cards
+│   ├── job_detail.html      ← job hub with V2 workflow buttons
+│   ├── add_job.html         ← add new application form
+│   ├── research.html        ← company research results
+│   ├── assessment.html      ← readiness score breakdown
+│   ├── roadmap.html         ← day by day preparation plan
+│   ├── simulator.html       ← interview questions with answer guides
+│   └── analytics.html       ← outcome pattern analysis
 ├── tests/
-│   ├── conftest.py      ← test database setup and fixtures
-│   └── test_jobs.py     ← 25 tests covering all endpoints
+│   ├── conftest.py          ← test database setup and fixtures
+│   ├── test_jobs.py         ← 25 V1 tests
+│   └── test_intelligence.py ← 23 V2 tests with mocking
 ├── .github/
 │   └── workflows/
-│       └── tests.yml    ← CI runs tests on every push
+│       └── tests.yml        ← CI runs 48 tests on every push
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
+## Database Design
+
+```
+jobs (core table)
+│
+├──→ readiness_assessments (many)
+│     Multiple assessments per job — tracks score history
+│
+├──→ prep_roadmaps (one per job)
+│     Day by day plan based on latest assessment gaps
+│
+├──→ interview_questions (many per job)
+│     Each question stored separately — user marks practiced
+│
+└──→ company_research (one per company name)
+
+Cached — same company researched twice uses cache
+Saves API quota, instant response on repeat lookup
+```
+
+---
+
 ## What I Learned Building This
 
-- Designing and building a REST API with FastAPI from scratch
-- Database modeling with SQLAlchemy ORM — no raw SQL
-- Separating concerns: schemas vs models vs routers
-- Dependency injection pattern in FastAPI
-- Integrating an LLM API with structured JSON prompt engineering
-- Extracting text from PDF files with pypdf
-- Server-side HTML rendering with Jinja2 templates
-- Writing 25 tests covering positive and negative cases
-- Dependency overrides for test database isolation
-- Setting up CI/CD with GitHub Actions
-- Deploying a Python web app to Render
+**V1**
+- REST API design with FastAPI from scratch
+- Database modeling with SQLAlchemy ORM
+- Dependency injection pattern
+- PDF text extraction with pypdf
+- Pydantic validation and schema separation
+- Writing tests with pytest and dependency overrides
+- CI/CD with GitHub Actions
+- Deploying Python web apps to Render
+
+**V2**
+- Multi-table database relationships and foreign keys
+- Database caching pattern (company research)
+- Auto-migration on startup for production databases
+- Multi-step AI prompt chaining
+- Mocking external dependencies in tests
+- Feature branch Git workflow
+- Product thinking — V1 to V2 evolution
+
+---
+
+## Application Status Pipeline
+
+```
+interested  → added the job, exploring
+researched  → ran company research
+assessed    → ran readiness check
+preparing   → following the roadmap
+ready       → readiness score above 70%
+applied     → submitted the application
+interview   → got a call
+offer       → received an offer
+rejected    → did not get through
+ghosted     → no response after weeks
+withdrawn   → decided not to pursue
+```
 
 ---
 
@@ -159,8 +242,3 @@ jobscribe/
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 
-## Screenshots
-
-![Dashboard](screenshots/dashboard.png)
-
-![Analysis Report](screenshots/analysis.png)

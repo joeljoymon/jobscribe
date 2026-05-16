@@ -8,6 +8,7 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id              = Column(Integer, primary_key=True, index=True)
+    session_id      = Column(String(36), nullable=True, index=True)  
     company         = Column(String(100), nullable=False)
     role            = Column(String(100), nullable=False)
     status          = Column(String(20), default="interested")  # V2: starts as interested

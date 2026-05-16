@@ -1,20 +1,23 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-import os
 
-# Use /tmp for Render's ephemeral filesystem
-# For local development it still creates jobscribe.db in project root
-if os.getenv("RENDER"):
-    DATABASE_PATH = "/tmp/jobscribe.db"
+# Use DATABASE_URL from environment if available (Neon on Render)
+# Fall back to local SQLite for development
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    # Neon PostgreSQL on Render
+    engine = create_engine(DATABASE_URL)
+    DATABASE_PATH = None
 else:
+    # Local SQLite for development
     DATABASE_PATH = "./jobscribe.db"
-
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
+    DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False}
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -26,31 +29,17 @@ def get_db():
     finally:
         db.close()
 
-
 def run_migrations():
-    """
-    Checks for missing columns and adds them automatically.
-    This runs on every startup — safe to call multiple times.
-    Handles the case where old V1 database exists on Render.
-    """
+    """Only runs for SQLite local development."""
+    if DATABASE_PATH is None:
+        return  # PostgreSQL handles schema automatically
+
     import sqlite3
-
-    # Get the actual database file path
-    db_path = DATABASE_PATH
-
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-
-    # Get existing columns in jobs table
     cursor.execute("PRAGMA table_info(jobs)")
     existing_columns = [row[1] for row in cursor.fetchall()]
-
-    # Add readiness_score if missing
     if "readiness_score" not in existing_columns:
-        cursor.execute(
-            "ALTER TABLE jobs ADD COLUMN readiness_score INTEGER"
-        )
-        print("Migration: added readiness_score column to jobs table")
-
+        cursor.execute("ALTER TABLE jobs ADD COLUMN readiness_score INTEGER")
     conn.commit()
     conn.close()

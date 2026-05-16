@@ -1,3 +1,5 @@
+from fastapi import APIRouter, Depends, HTTPException,  Request, Response
+from app.session import get_or_create_session_id
 from app.analyzer import (
     extract_text_from_pdf,
     research_company,
@@ -8,7 +10,6 @@ from app.analyzer import (
 )
 import os
 import json
-from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Job, CompanyResearch, ReadinessAssessment, PrepRoadmap, InterviewQuestion
@@ -19,7 +20,8 @@ router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 
 # ── COMPANY RESEARCH ─────────────────────────────────────────
 @router.post("/jobs/{job_id}/research")
-def research_job_company(job_id: int, db: Session = Depends(get_db)):
+def research_job_company(job_id: int,request: Request,
+    response: Response, db: Session = Depends(get_db)):
     """
     Researches the company and role for a specific job.
 
@@ -29,9 +31,10 @@ def research_job_company(job_id: int, db: Session = Depends(get_db)):
 
     Also updates job status to 'researched'.
     """
+    session_id = get_or_create_session_id(request, response)
 
     # Guard 1 — job must exist
-    job = db.query(Job).filter(Job.id == job_id).first()
+    job = db.query(Job).filter(Job.id == job_id, Job.session_id == session_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -86,7 +89,8 @@ def research_job_company(job_id: int, db: Session = Depends(get_db)):
 
 # ── READINESS ASSESSMENT ─────────────────────────────────────
 @router.post("/jobs/{job_id}/assess")
-def assess_job_readiness(job_id: int, db: Session = Depends(get_db)):
+def assess_job_readiness(job_id: int, request: Request,
+    response: Response,db: Session = Depends(get_db)):
     """
     Assesses how ready the user is for this specific role.
 
@@ -98,9 +102,10 @@ def assess_job_readiness(job_id: int, db: Session = Depends(get_db)):
     This builds a history of scores so user can track improvement.
     Also updates job.readiness_score with the latest score.
     """
+    session_id = get_or_create_session_id(request, response)
 
     # Guard 1 — job must exist
-    job = db.query(Job).filter(Job.id == job_id).first()
+    job = db.query(Job).filter(Job.id == job_id, Job.session_id == session_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -172,7 +177,8 @@ def assess_job_readiness(job_id: int, db: Session = Depends(get_db)):
 
 # ── PREPARATION ROADMAP ──────────────────────────────────────
 @router.post("/jobs/{job_id}/roadmap")
-def generate_job_roadmap(job_id: int, db: Session = Depends(get_db)):
+def generate_job_roadmap(job_id: int, request: Request,
+    response: Response, db: Session = Depends(get_db)):
     """
     Generates a day by day preparation plan based on
     the latest readiness assessment gaps.
@@ -181,9 +187,10 @@ def generate_job_roadmap(job_id: int, db: Session = Depends(get_db)):
     If a roadmap already exists for this job, replaces it.
     Updates job status to 'preparing'.
     """
+    session_id = get_or_create_session_id(request, response)
 
     # Guard 1 — job must exist
-    job = db.query(Job).filter(Job.id == job_id).first()
+    job = db.query(Job).filter(Job.id == job_id, Job.session_id == session_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -240,7 +247,8 @@ def generate_job_roadmap(job_id: int, db: Session = Depends(get_db)):
 
 # ── INTERVIEW SIMULATOR ──────────────────────────────────────
 @router.post("/jobs/{job_id}/simulate")
-def simulate_interview(job_id: int, db: Session = Depends(get_db)):
+def simulate_interview(job_id: int, request: Request,
+    response: Response, db: Session = Depends(get_db)):
     """
     Generates 10 personalized interview questions.
 
@@ -252,9 +260,10 @@ def simulate_interview(job_id: int, db: Session = Depends(get_db)):
     Each question is saved as its own row so user
     can mark individual questions as practiced.
     """
+    session_id = get_or_create_session_id(request, response)
 
     # Guard 1 — job must exist
-    job = db.query(Job).filter(Job.id == job_id).first()
+    job = db.query(Job).filter(Job.id == job_id, Job.session_id == session_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
 
@@ -316,13 +325,15 @@ def simulate_interview(job_id: int, db: Session = Depends(get_db)):
 
 # ── MARK QUESTION AS PRACTICED ───────────────────────────────
 @router.patch("/questions/{question_id}/practiced")
-def mark_question_practiced(question_id: int, db: Session = Depends(get_db)):
+def mark_question_practiced(question_id: int, request: Request,
+    response: Response, db: Session = Depends(get_db)):
     """
     User marks a single interview question as practiced.
     Simple toggle — practiced becomes True.
     """
-    question = db.query(InterviewQuestion).filter(
-        InterviewQuestion.id == question_id
+    session_id = get_or_create_session_id(request, response)
+    question = db.query(InterviewQuestion).join(Job).filter(
+        InterviewQuestion.id == question_id, Job.session_id == session_id
     ).first()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
@@ -334,13 +345,15 @@ def mark_question_practiced(question_id: int, db: Session = Depends(get_db)):
 
 # ── OUTCOME ANALYTICS ────────────────────────────────────────
 @router.get("/analytics")
-def get_analytics(db: Session = Depends(get_db)):
+def get_analytics(request: Request,
+    response: Response, db: Session = Depends(get_db)):
     """
     Analyses all job outcomes to find patterns.
     Only meaningful once user has 3+ applications with outcomes.
     """
+    session_id = get_or_create_session_id(request, response)
 
-    all_jobs = db.query(Job).all()
+    all_jobs = db.query(Job).filter(Job.session_id == session_id).all()
 
     if len(all_jobs) < 3:
         return {
