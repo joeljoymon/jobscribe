@@ -56,6 +56,14 @@
             Save
         </button>
     </div>
+    <div style="margin-top:1rem; padding-top:1rem;
+            border-top:1px solid #f0f0f0;">
+    <button class="btn btn-danger"
+            onclick="deleteJob()"
+            style="font-size:0.85rem;">
+        Delete This Application
+    </button>
+</div>
 </div>
 
 <!-- V2 Intelligence Workflow -->
@@ -336,6 +344,23 @@ async function runStep(step) {
     };
 
     window.location.href = redirects[step];
+}
+
+async function deleteJob() {
+    const confirmed = confirm(
+        "Are you sure you want to delete this application? " +
+        "This will also remove all assessments, roadmap, and " +
+        "interview questions for this job. This cannot be undone."
+    );
+    if (!confirmed) return;
+
+    const res = await fetch(`/jobs/${jobId}`, { method: 'DELETE' });
+    if (res.ok) {
+        window.location.href = '/';
+    } else {
+        const data = await res.json();
+        alert('Delete failed: ' + data.detail);
+    }
 }
 </script>
 
