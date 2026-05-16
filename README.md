@@ -237,6 +237,68 @@ withdrawn   → decided not to pursue
 
 ---
 
+## How to Use JobScribe
+
+JobScribe uses browser session identity — no login or account creation
+required. Your data is tied to your browser session automatically.
+
+### Getting Started
+
+Open the live URL in your browser and start adding jobs immediately.
+Your session is created automatically on your first visit and persists
+for one year.
+
+```
+First visit → session created automatically
+Add jobs    → data saved to your session
+Return tomorrow, next week, next month → same data waiting for you
+```
+
+### Important: Protecting Your Data
+
+Since JobScribe uses browser cookies instead of a login system,
+there are a few things to keep in mind:
+
+| Action | What Happens | What to Do Instead |
+|---|---|---|
+| Clear browser cookies/cache | ⚠️ Session lost — your jobs are no longer accessible | Only clear cookies for specific sites, not all |
+| Open in Incognito/Private mode | ⚠️ New empty session — your data is not visible | Use your regular browser window |
+| Switch to a different browser | ⚠️ Different session — your data is not visible | Stick to one browser (Chrome, Brave, or Firefox) |
+| Clear site data for JobScribe | ⚠️ Session lost — your jobs are no longer accessible | Avoid clearing site data for this URL |
+| Open on a different device | ⚠️ Different session — your data is not visible | Use the same browser on the same device |
+
+### What Works Perfectly
+
+```
+✔ Close the browser tab and reopen        → same data
+✔ Restart your computer and reopen        → same data
+✔ Open multiple tabs in the same browser  → same data
+✔ Leave it for days or weeks and return   → same data
+```
+
+### If You Lose Your Session
+
+If you accidentally clear your cookies your jobs are no longer
+accessible from that browser. The data still exists in the database
+but is linked to your old session ID which is now gone from your
+browser.
+
+To avoid this:
+
+- When clearing browser data, choose **"Cookies from specific sites"**
+  and exclude `jobscribe-joel.onrender.com`
+- In Chrome: Settings → Privacy → Clear browsing data →
+  click "See all site data" → delete only what you need
+- Do not use "Clear all cookies" — use site-specific deletion instead
+
+### Why No Login?
+
+JobScribe intentionally skips login to remove friction. You don't
+need to remember a password or verify an email — just open the URL
+and your data is there. The trade-off is that your session is tied
+to one browser on one device. For a personal job tracking tool used
+on your main browser, this works perfectly.
+
 ## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
