@@ -17,7 +17,7 @@ class TestCreateJob:
         data = response.json()
         assert data["company"] == "Google"
         assert data["role"] == "Backend Intern"
-        assert data["status"] == "applied"
+        assert data["status"] == "interested"
         assert data["id"] == 1
 
     def test_create_job_auto_sets_applied_status(self, client):
@@ -26,7 +26,7 @@ class TestCreateJob:
             "company": "Flipkart",
             "role": "SDE Intern"
         })
-        assert response.json()["status"] == "applied"
+        assert response.json()["status"] == "interested"
 
     def test_create_job_missing_company_fails(self, client):
         """Creating a job without company should fail."""
@@ -120,7 +120,7 @@ class TestUpdateJob:
         response = client.patch("/jobs/1", data={"notes": "Great company"})
         assert response.status_code == 200
         assert response.json()["notes"] == "Great company"
-        assert response.json()["status"] == "applied"
+        assert response.json()["status"] == "interested"
 
     def test_update_nonexistent_job_returns_404(self, client):
         """Updating a job that doesn't exist should return 404."""

@@ -5,8 +5,15 @@ from sqlalchemy.orm import sessionmaker
 from app.database import Base, get_db
 from app.main import app
 
-# Use a separate in-memory database for tests
-# This means tests never touch your real jobscribe.db
+# Import all models so SQLAlchemy creates all tables
+from app.models import (          # add this block
+    Job,
+    CompanyResearch,
+    ReadinessAssessment,
+    PrepRoadmap,
+    InterviewQuestion
+)
+
 TEST_DATABASE_URL = "sqlite:///./test_jobscribe.db"
 
 engine = create_engine(
@@ -22,11 +29,6 @@ TestingSessionLocal = sessionmaker(
 
 
 def override_get_db():
-    """
-    Replaces the real database session with a test one.
-    FastAPI's dependency override system swaps this in
-    automatically for every request made during tests.
-    """
     db = TestingSessionLocal()
     try:
         yield db
@@ -36,11 +38,6 @@ def override_get_db():
 
 @pytest.fixture(autouse=True)
 def setup_database():
-    """
-    Creates all tables before each test.
-    Drops all tables after each test.
-    This guarantees every test starts with a clean slate.
-    """
     Base.metadata.create_all(bind=engine)
     app.dependency_overrides[get_db] = override_get_db
     yield
@@ -50,8 +47,4 @@ def setup_database():
 
 @pytest.fixture
 def client():
-    """
-    Provides a test client that makes real HTTP requests
-    to your FastAPI app without needing a running server.
-    """
     return TestClient(app)

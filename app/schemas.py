@@ -41,6 +41,7 @@ class JobResponse(BaseModel):
     resume_path: Optional[str]
     analysis:    Optional[str]
     notes:       Optional[str]
+    readiness_score: Optional[int] 
     applied_at:  datetime
 
 

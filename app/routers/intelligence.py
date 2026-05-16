@@ -1,16 +1,18 @@
+from app.analyzer import (
+    extract_text_from_pdf,
+    research_company,
+    assess_readiness,
+    generate_roadmap,
+    generate_interview_questions,
+    analyze_outcomes 
+)
 import os
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Job, CompanyResearch, ReadinessAssessment, PrepRoadmap, InterviewQuestion
-from app.analyzer import (
-    extract_text_from_pdf,
-    research_company,
-    assess_readiness,
-    generate_roadmap,
-    generate_interview_questions
-)
+
 
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 
@@ -215,6 +217,7 @@ def generate_job_roadmap(job_id: int, db: Session = Depends(get_db)):
     ).first()
     if existing:
         db.delete(existing)
+        db.commit()
 
     new_roadmap = PrepRoadmap(
         job_id       = job_id,
@@ -336,7 +339,6 @@ def get_analytics(db: Session = Depends(get_db)):
     Analyses all job outcomes to find patterns.
     Only meaningful once user has 3+ applications with outcomes.
     """
-    from app.analyzer import analyze_outcomes
 
     all_jobs = db.query(Job).all()
 
