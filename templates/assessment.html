@@ -1,132 +1,143 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div style="margin-bottom:1rem;">
-    <a href="/jobs/{{ job.id }}/detail"
-       style="color:#888; text-decoration:none; font-size:0.9rem;">
-        ← Back to {{ job.company }} — {{ job.role }}
-    </a>
-</div>
+<a href="/jobs/{{ job.id }}/detail" class="back-link">
+    ← {{ job.company }} — {{ job.role }}
+</a>
 
 <h1 class="page-title">Readiness Assessment</h1>
-<p style="color:#666; margin-bottom:1.5rem;">
-    {{ job.company }} — {{ job.role }}
-</p>
 
-<!-- Overall Score -->
-<div class="card" style="margin-bottom:1.5rem;">
+<!-- Overall score -->
+<div class="card card-purple" style="margin-bottom:1rem;">
     <div style="display:flex; justify-content:space-between;
                 align-items:center; margin-bottom:1rem;">
-        <h2 style="font-size:1.1rem;">Overall Readiness</h2>
-        <span style="font-size:2rem; font-weight:700;
-              color:{% if assessment.overall_readiness_score >= 70 %}#065f46
-                    {% elif assessment.overall_readiness_score >= 50 %}#92400e
-                    {% else %}#991b1b{% endif %}">
-            {{ assessment.overall_readiness_score }}%
-        </span>
+        <div>
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.4);
+                        margin-bottom:0.25rem; letter-spacing:0.06em;">
+                OVERALL READINESS
+            </div>
+            <div style="font-size:2.5rem; font-weight:700;
+                  color:{% if assessment.overall_readiness_score >= 70 %}#34d399
+                        {% elif assessment.overall_readiness_score >= 50 %}#fbbf24
+                        {% else %}#f87171{% endif %}">
+                {{ assessment.overall_readiness_score }}%
+            </div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:0.78rem; color:rgba(255,255,255,0.4);
+                        margin-bottom:0.4rem;">
+                Confidence level
+            </div>
+            <span class="badge
+                {% if assessment.confidence_level == 'strong' %}badge-offer
+                {% elif assessment.confidence_level == 'ready' %}badge-applied
+                {% elif assessment.confidence_level == 'building' %}badge-assessed
+                {% else %}badge-rejected{% endif %}">
+                {{ assessment.confidence_level }}
+            </span>
+        </div>
     </div>
 
     <div class="score-bar-track" style="margin-bottom:0.5rem;">
-        <div class="score-bar-fill"
-             style="width:{{ assessment.overall_readiness_score }}%;
-             background:
-             {% if assessment.overall_readiness_score >= 70 %}
-                 linear-gradient(90deg,#6ee7b7,#059669)
-             {% elif assessment.overall_readiness_score >= 50 %}
-                 linear-gradient(90deg,#fcd34d,#d97706)
-             {% else %}
-                 linear-gradient(90deg,#fca5a5,#dc2626)
-             {% endif %}">
+        <div class="score-bar-fill
+            {% if assessment.overall_readiness_score >= 70 %}green
+            {% elif assessment.overall_readiness_score >= 50 %}amber{% endif %}"
+            style="width:{{ assessment.overall_readiness_score }}%">
         </div>
     </div>
 
     <div style="display:flex; justify-content:space-between;
-                font-size:0.85rem; color:#888; margin-bottom:1.5rem;">
-        <span>Confidence: <strong>{{ assessment.confidence_level }}</strong></span>
-        <span>Est. days to ready:
-            <strong>{{ assessment.estimated_days_to_ready }}</strong>
+                font-size:0.8rem; color:rgba(255,255,255,0.35);">
+        <span>Estimated days to ready:
+            <strong style="color:rgba(255,255,255,0.6);">
+                {{ assessment.estimated_days_to_ready }}
+            </strong>
+        </span>
+        <span>Verdict:
+            <strong style="color:
+                {% if assessment.verdict == 'apply now' %}#34d399
+                {% elif assessment.verdict == 'prepare first' %}#fbbf24
+                {% else %}#f87171{% endif %}">
+                {{ assessment.verdict }}
+            </strong>
         </span>
     </div>
+</div>
 
-    <!-- Score Breakdown -->
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;">
-        {% for label, score in [
-            ('Technical Skills', assessment.technical_skills_score),
-            ('CS Fundamentals', assessment.cs_fundamentals_score),
-            ('Project Relevance', assessment.projects_relevance_score)
-        ] %}
-        <div style="text-align:center; padding:1rem;
-                    border:1px solid #e5e7eb; border-radius:8px;">
-            <div style="font-size:1.3rem; font-weight:700; color:#1a1a2e;">
-                {{ score }}%
-            </div>
-            <div style="font-size:0.8rem; color:#888; margin-top:0.3rem;">
-                {{ label }}
-            </div>
+<!-- Score breakdown -->
+<div style="display:grid; grid-template-columns:repeat(3,1fr);
+            gap:0.75rem; margin-bottom:1rem;">
+    {% for label, score in [
+        ('Technical Skills', assessment.technical_skills_score),
+        ('CS Fundamentals', assessment.cs_fundamentals_score),
+        ('Project Relevance', assessment.projects_relevance_score)
+    ] %}
+    <div class="card" style="text-align:center; padding:1rem;">
+        <div style="font-size:1.5rem; font-weight:700;
+              color:{% if score >= 70 %}#34d399
+                    {% elif score >= 50 %}#fbbf24
+                    {% else %}#f87171{% endif %}">
+            {{ score }}%
         </div>
-        {% endfor %}
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.35);
+                    margin-top:0.25rem;">
+            {{ label }}
+        </div>
     </div>
+    {% endfor %}
 </div>
 
-<!-- Verdict -->
-<div class="card" style="margin-bottom:1.5rem;
-     border-left:4px solid
-     {% if assessment.verdict == 'apply now' %}#059669
-     {% elif assessment.verdict == 'prepare first' %}#d97706
-     {% else %}#dc2626{% endif %}">
-    <h2 style="font-size:1rem; color:#888; margin-bottom:0.5rem;">VERDICT</h2>
-    <p style="font-size:1.1rem; font-weight:600; margin-bottom:1rem;">
-        {{ assessment.verdict | upper }}
+<!-- Honest assessment -->
+<div class="card" style="margin-bottom:1rem;
+     border-left:3px solid rgba(167,139,250,0.5);">
+    <div class="section-label">Honest Assessment</div>
+    <p style="color:rgba(255,255,255,0.7); font-size:0.9rem; line-height:1.7;">
+        {{ assessment.honest_assessment }}
     </p>
-    <p style="color:#444;">{{ assessment.honest_assessment }}</p>
 </div>
 
-<!-- Strengths and Gaps -->
+<!-- Strengths and gaps -->
 <div style="display:grid; grid-template-columns:1fr 1fr;
-            gap:1rem; margin-bottom:1.5rem;">
-    <div class="card">
-        <h2 style="font-size:1rem; color:#065f46; margin-bottom:0.8rem;">
-            ✔ Your Strengths
-        </h2>
-        <ul style="padding-left:1.2rem;">
-            {% for strength in assessment.strengths %}
-            <li style="margin-bottom:0.4rem; font-size:0.9rem;
-                        color:#444;">{{ strength }}</li>
+            gap:0.75rem; margin-bottom:1rem;">
+    <div class="card card-green">
+        <div style="font-size:0.78rem; color:#34d399; font-weight:600;
+                    margin-bottom:0.75rem;">✔ Your Strengths</div>
+        <ul style="padding-left:1.1rem; color:rgba(255,255,255,0.6);
+                   font-size:0.875rem; line-height:1.9;">
+            {% for s in assessment.strengths %}
+            <li>{{ s }}</li>
             {% endfor %}
         </ul>
     </div>
-    <div class="card">
-        <h2 style="font-size:1rem; color:#991b1b; margin-bottom:0.8rem;">
-            ✗ Gaps to Address
-        </h2>
-        <ul style="padding-left:1.2rem;">
-            {% for gap in assessment.gaps %}
-            <li style="margin-bottom:0.4rem; font-size:0.9rem;
-                        color:#444;">{{ gap }}</li>
+    <div class="card card-amber">
+        <div style="font-size:0.78rem; color:#f87171; font-weight:600;
+                    margin-bottom:0.75rem;">✗ Gaps to Address</div>
+        <ul style="padding-left:1.1rem; color:rgba(255,255,255,0.6);
+                   font-size:0.875rem; line-height:1.9;">
+            {% for g in assessment.gaps %}
+            <li>{{ g }}</li>
             {% endfor %}
         </ul>
     </div>
 </div>
 
-<!-- CS Gaps -->
 {% if assessment.cs_gaps %}
 <div class="card" style="margin-bottom:1.5rem;">
-    <h2 style="font-size:1rem; color:#888; margin-bottom:0.8rem;">
-        CS FUNDAMENTALS TO STUDY
-    </h2>
+    <div class="section-label">CS Fundamentals to Study</div>
     {% for gap in assessment.cs_gaps %}
     <div style="display:flex; align-items:flex-start; gap:0.5rem;
                 margin-bottom:0.6rem;">
-        <span style="color:#991b1b; font-weight:600;">✗</span>
-        <span style="font-size:0.9rem; color:#444;">{{ gap }}</span>
+        <span style="color:#f87171; font-size:0.85rem; margin-top:1px;">✗</span>
+        <span style="font-size:0.875rem; color:rgba(255,255,255,0.6);">
+            {{ gap }}
+        </span>
     </div>
     {% endfor %}
 </div>
 {% endif %}
 
-<div style="display:flex; gap:1rem;">
-    <a href="/jobs/{{ job.id }}/detail" class="btn"
-       style="background:#f0f0f0; color:#444;">← Back</a>
+<div style="display:flex; gap:0.75rem;">
+    <a href="/jobs/{{ job.id }}/detail" class="btn btn-ghost">← Back</a>
     <button class="btn btn-primary" onclick="runRoadmap()">
         Get Preparation Plan →
     </button>
@@ -138,14 +149,14 @@ async function runRoadmap() {
     btn.textContent = 'Generating...';
     btn.disabled = true;
     const res = await fetch(`/intelligence/jobs/{{ job.id }}/roadmap`,
-                            { method: 'POST' });
+                            { method:'POST' });
     if (res.ok) {
         window.location.href = `/jobs/{{ job.id }}/roadmap-result`;
     } else {
-        const data = await res.json();
+        const d = await res.json();
         btn.textContent = 'Get Preparation Plan →';
         btn.disabled = false;
-        alert('Error: ' + data.detail);
+        alert('Error: ' + d.detail);
     }
 }
 </script>

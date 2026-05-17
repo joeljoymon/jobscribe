@@ -1,64 +1,73 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div style="margin-bottom:1rem;">
-    <a href="/jobs/{{ job.id }}/detail"
-       style="color:#888; text-decoration:none; font-size:0.9rem;">
-        ← Back to {{ job.company }} — {{ job.role }}
-    </a>
-</div>
+<a href="/jobs/{{ job.id }}/detail" class="back-link">
+    ← {{ job.company }} — {{ job.role }}
+</a>
 
 <h1 class="page-title">
     {{ roadmap.total_days }}-Day Preparation Plan
 </h1>
-<p style="color:#666; margin-bottom:1.5rem;">
-    {{ job.company }} — {{ job.role }}
+<p style="color:rgba(255,255,255,0.4); margin-bottom:1.5rem; font-size:0.9rem;">
+    {{ job.company }} · {{ job.role }}
 </p>
 
 {% for day in roadmap.daily_plan %}
-<div class="card" style="margin-bottom:1rem;">
+<div class="card" style="margin-bottom:0.75rem;">
     <div style="display:flex; justify-content:space-between;
-                align-items:flex-start; margin-bottom:0.8rem;">
-        <div>
-            <span style="background:#1a1a2e; color:#fff; padding:0.2rem 0.6rem;
-                         border-radius:20px; font-size:0.8rem;
-                         font-weight:600; margin-right:0.5rem;">
+                align-items:flex-start; margin-bottom:0.85rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="background:rgba(167,139,250,0.2);
+                         border:1px solid rgba(167,139,250,0.4);
+                         color:#a78bfa; font-size:0.75rem; font-weight:700;
+                         padding:0.2rem 0.65rem; border-radius:20px;
+                         letter-spacing:0.05em;">
                 Day {{ day.day_number }}
             </span>
-            <strong>{{ day.title }}</strong>
+            <span style="font-weight:600; font-size:0.95rem;
+                          color:rgba(255,255,255,0.85);">
+                {{ day.title }}
+            </span>
         </div>
-        <span style="font-size:0.8rem; color:#888;">
+        <span style="font-size:0.78rem; color:rgba(255,255,255,0.3);">
             ~{{ day.estimated_hours }} hrs
         </span>
     </div>
 
-    <p style="color:#4cc9f0; font-weight:600; margin-bottom:0.8rem;">
+    <div style="color:#a78bfa; font-weight:600; font-size:0.88rem;
+                margin-bottom:0.85rem;">
         {{ day.focus_topic }}
-    </p>
+    </div>
 
-    <div style="display:grid; grid-template-columns:1fr 1fr;
-                gap:1rem; font-size:0.9rem;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;
+                font-size:0.875rem;">
         <div>
-            <p style="font-weight:500; margin-bottom:0.4rem; color:#555;">
-                What to study:
-            </p>
-            <ul style="padding-left:1.2rem; color:#444;">
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                        margin-bottom:0.4rem; font-weight:500;">
+                What to study
+            </div>
+            <ul style="padding-left:1.1rem; color:rgba(255,255,255,0.6);
+                       line-height:1.9;">
                 {% for item in day.what_to_study %}
-                <li style="margin-bottom:0.3rem;">{{ item }}</li>
+                <li>{{ item }}</li>
                 {% endfor %}
             </ul>
         </div>
         <div>
-            <p style="font-weight:500; margin-bottom:0.4rem; color:#555;">
-                Depth needed:
-            </p>
-            <p style="color:#444; margin-bottom:0.8rem;">
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                        margin-bottom:0.4rem; font-weight:500;">
+                Depth needed
+            </div>
+            <p style="color:rgba(255,255,255,0.55); margin-bottom:0.75rem;
+                      line-height:1.6;">
                 {{ day.depth_needed }}
             </p>
-            <p style="font-weight:500; margin-bottom:0.4rem; color:#555;">
-                How to verify:
-            </p>
-            <p style="color:#444; font-style:italic;">
+            <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                        margin-bottom:0.4rem; font-weight:500;">
+                How to verify
+            </div>
+            <p style="color:rgba(255,255,255,0.55); font-style:italic;
+                      line-height:1.6;">
                 {{ day.how_to_verify }}
             </p>
         </div>
@@ -66,17 +75,15 @@
 </div>
 {% endfor %}
 
-<div class="card" style="margin-bottom:1.5rem;
-     background:#f0fdf4; border:1px solid #bbf7d0;">
-    <p style="color:#065f46; font-weight:600;">
+<div class="card card-green" style="margin-bottom:1.5rem;">
+    <div style="color:#34d399; font-weight:600; font-size:0.9rem;">
         🎯 Final Step: {{ roadmap.final_day_activity }}
-    </p>
+    </div>
 </div>
 
-<div style="display:flex; gap:1rem;">
-    <a href="/jobs/{{ job.id }}/detail" class="btn"
-       style="background:#f0f0f0; color:#444;">← Back</a>
-    <button class="btn btn-primary" onclick="runSimulator()">
+<div style="display:flex; gap:0.75rem;">
+    <a href="/jobs/{{ job.id }}/detail" class="btn btn-ghost">← Back</a>
+    <button class="btn btn-success" onclick="runSimulator()">
         Start Interview Simulator →
     </button>
 </div>
@@ -87,14 +94,14 @@ async function runSimulator() {
     btn.textContent = 'Generating questions...';
     btn.disabled = true;
     const res = await fetch(`/intelligence/jobs/{{ job.id }}/simulate`,
-                            { method: 'POST' });
+                            { method:'POST' });
     if (res.ok) {
         window.location.href = `/jobs/{{ job.id }}/simulator`;
     } else {
-        const data = await res.json();
+        const d = await res.json();
         btn.textContent = 'Start Interview Simulator →';
         btn.disabled = false;
-        alert('Error: ' + data.detail);
+        alert('Error: ' + d.detail);
     }
 }
 </script>

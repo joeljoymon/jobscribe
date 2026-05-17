@@ -1,86 +1,79 @@
 {% extends "base.html" %}
 {% block content %}
 
+<a href="/" class="back-link">← Back to Dashboard</a>
 <h1 class="page-title">Add New Application</h1>
 
-<div class="card" style="max-width:700px;">
-    <form id="addJobForm">
-        <div class="form-group">
-            <label>Company Name *</label>
-            <input type="text" id="company" placeholder="e.g. Google" required>
+<div class="card card-purple" style="max-width:680px;">
+    <div class="form-group">
+        <label>Company Name *</label>
+        <input type="text" id="company" placeholder="e.g. Google">
+    </div>
+    <div class="form-group">
+        <label>Role *</label>
+        <input type="text" id="role" placeholder="e.g. Backend Intern">
+    </div>
+    <div class="form-group">
+        <label>Job Posting URL</label>
+        <input type="url" id="job_url" placeholder="https://...">
+    </div>
+    <div class="form-group">
+        <label>Job Description</label>
+        <textarea id="jd_text"
+            placeholder="Paste the full job description here — the more detail the better the AI analysis."></textarea>
+        <div style="font-size:0.78rem; color:rgba(255,255,255,0.25);
+                    margin-top:0.4rem;">
+            Adding the JD now lets you run all intelligence features immediately.
         </div>
-        <div class="form-group">
-            <label>Role *</label>
-            <input type="text" id="role" placeholder="e.g. Backend Intern" required>
-        </div>
-        <div class="form-group">
-            <label>Job Posting URL</label>
-            <input type="url" id="job_url" placeholder="https://...">
-        </div>
-        <div class="form-group">
-            <label>Job Description</label>
-            <textarea id="jd_text"
-                placeholder="Paste the full job description here..."></textarea>
-            <small style="color:#888;">
-                Adding the JD now lets you run AI analysis immediately after saving.
-            </small>
-        </div>
-        <div class="form-group">
-            <label>Notes</label>
-            <input type="text" id="notes"
-                placeholder="e.g. Applied via LinkedIn, referral from...">
-        </div>
+    </div>
+    <div class="form-group">
+        <label>Notes</label>
+        <input type="text" id="notes"
+            placeholder="e.g. Applied via LinkedIn, referral from...">
+    </div>
 
-        <div style="display:flex; gap:0.8rem;">
-            <button type="button" class="btn btn-primary" onclick="submitJob()">
-                Save Application
-            </button>
-            <a href="/" class="btn" style="background:#f0f0f0; color:#444;">
-                Cancel
-            </a>
-        </div>
+    <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
+        <button type="button" class="btn btn-primary" onclick="submitJob()">
+            Save Application
+        </button>
+        <a href="/" class="btn btn-ghost">Cancel</a>
+    </div>
 
-        <div id="formMsg" style="margin-top:1rem; font-size:0.9rem;"></div>
-    </form>
+    <div id="formMsg" style="margin-top:1rem; font-size:0.85rem;"></div>
 </div>
 
 <script>
 async function submitJob() {
-    const company  = document.getElementById('company').value.trim();
-    const role     = document.getElementById('role').value.trim();
-    const job_url  = document.getElementById('job_url').value.trim();
-    const jd_text  = document.getElementById('jd_text').value.trim();
-    const notes    = document.getElementById('notes').value.trim();
-    const msg      = document.getElementById('formMsg');
+    const company = document.getElementById('company').value.trim();
+    const role    = document.getElementById('role').value.trim();
+    const job_url = document.getElementById('job_url').value.trim();
+    const jd_text = document.getElementById('jd_text').value.trim();
+    const notes   = document.getElementById('notes').value.trim();
+    const msg     = document.getElementById('formMsg');
 
     if (!company || !role) {
-        msg.style.color = '#991b1b';
-        msg.textContent = 'Company and role are required.';
+        msg.style.color = '#f87171';
+        msg.textContent = '✕ Company and role are required.';
         return;
     }
 
-    // Build form data — avoids JSON escaping issues with long JD text
-    const formData = new FormData();
-    formData.append('company', company);
-    formData.append('role', role);
-    if (job_url) formData.append('job_url', job_url);
-    if (jd_text) formData.append('jd_text', jd_text);
-    if (notes)   formData.append('notes', notes);
+    const fd = new FormData();
+    fd.append('company', company);
+    fd.append('role', role);
+    if (job_url) fd.append('job_url', job_url);
+    if (jd_text) fd.append('jd_text', jd_text);
+    if (notes)   fd.append('notes', notes);
 
-    const res = await fetch('/jobs/', {
-        method: 'POST',
-        body: formData
-    });
-
+    const res = await fetch('/jobs/', { method:'POST', body:fd });
     if (res.ok) {
         const job = await res.json();
-        msg.style.color = '#065f46';
-        msg.textContent = 'Saved! Redirecting...';
+        msg.style.color = '#34d399';
+        msg.textContent = '✔ Saved! Redirecting...';
         setTimeout(() => window.location.href = `/jobs/${job.id}/detail`, 1000);
     } else {
         const data = await res.json();
-        msg.style.color = '#991b1b';
-        msg.textContent = 'Error: ' + (data.detail || 'Something went wrong');
+        msg.style.color = '#f87171';
+        msg.textContent = '✕ ' + (data.detail || 'Something went wrong');
     }
 }
 </script>

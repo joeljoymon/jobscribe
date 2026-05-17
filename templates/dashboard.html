@@ -3,103 +3,186 @@
 
 <div style="display:flex; justify-content:space-between;
             align-items:center; margin-bottom:1.5rem;">
-    <h1 class="page-title" style="margin-bottom:0;">My Applications</h1>
+    <h1 class="page-title" style="margin-bottom:0;">
+        My Applications
+    </h1>
     <a href="/add-job" class="btn btn-primary">+ Add Job</a>
 </div>
 
+<!-- Summary stat cards -->
+<div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+            gap:0.75rem; margin-bottom:1.5rem;">
+    {% set total     = jobs | length %}
+    {% set assessed  = jobs | selectattr('readiness_score') | list | length %}
+    {% set applied   = jobs | selectattr('status','equalto','applied') | list | length %}
+    {% set interview = jobs | selectattr('status','equalto','interview') | list | length %}
+    {% set offers    = jobs | selectattr('status','equalto','offer') | list | length %}
+
+    <div class="card" style="text-align:center; padding:1rem;">
+        <div style="font-size:1.8rem; font-weight:700; color:#a78bfa;">
+            {{ total }}
+        </div>
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                    margin-top:0.25rem; letter-spacing:0.05em;">
+            TRACKED
+        </div>
+    </div>
+
+    <div class="card" style="text-align:center; padding:1rem;">
+        <div style="font-size:1.8rem; font-weight:700; color:#60a5fa;">
+            {{ assessed }}
+        </div>
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                    margin-top:0.25rem; letter-spacing:0.05em;">
+            ASSESSED
+        </div>
+    </div>
+
+    <div class="card" style="text-align:center; padding:1rem;">
+        <div style="font-size:1.8rem; font-weight:700; color:#34d399;">
+            {{ applied }}
+        </div>
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                    margin-top:0.25rem; letter-spacing:0.05em;">
+            APPLIED
+        </div>
+    </div>
+
+    <div class="card" style="text-align:center; padding:1rem;">
+        <div style="font-size:1.8rem; font-weight:700; color:#fbbf24;">
+            {{ interview }}
+        </div>
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                    margin-top:0.25rem; letter-spacing:0.05em;">
+            INTERVIEWS
+        </div>
+    </div>
+
+    <div class="card" style="text-align:center; padding:1rem;">
+        <div style="font-size:1.8rem; font-weight:700; color:#6ee7b7;">
+            {{ offers }}
+        </div>
+        <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                    margin-top:0.25rem; letter-spacing:0.05em;">
+            OFFERS
+        </div>
+    </div>
+</div>
+
 {% if jobs %}
-<table>
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Company</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Readiness</th>
-            <th>Match</th>
-            <th>Added</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for job in jobs %}
-        <tr>
-            <td>{{ job.id }}</td>
-            <td><strong>{{ job.company }}</strong></td>
-            <td>{{ job.role }}</td>
-            <td>
-                <span class="badge badge-{{ job.status }}">
-                    {{ job.status }}
-                </span>
-            </td>
 
-            <!-- Readiness Score (V2) -->
-            <td>
-                {% if job.readiness_score %}
-                    <div style="display:flex; align-items:center; gap:0.5rem;">
-                        <div class="score-bar-track" style="width:60px;">
-                            <div class="score-bar-fill"
-                                 style="width:{{ job.readiness_score }}%;
-                                 background:
-                                 {% if job.readiness_score >= 70 %}
-                                     linear-gradient(90deg,#6ee7b7,#059669)
-                                 {% elif job.readiness_score >= 50 %}
-                                     linear-gradient(90deg,#fcd34d,#d97706)
-                                 {% else %}
-                                     linear-gradient(90deg,#fca5a5,#dc2626)
-                                 {% endif %}">
-                            </div>
-                        </div>
-                        <span style="font-size:0.85rem; font-weight:600;">
-                            {{ job.readiness_score }}%
-                        </span>
-                    </div>
-                {% else %}
-                    <span style="color:#ccc; font-size:0.8rem;">not assessed</span>
-                {% endif %}
-            </td>
+{% for job in jobs %}
+<div class="card" style="margin-bottom:0.75rem; display:flex;
+     align-items:center; gap:1rem; padding:1rem 1.25rem;">
 
-            <!-- Match Score (V1) -->
-            <td>
-                {% if job.analysis %}
-                    {% set analysis = job.analysis | fromjson %}
-                    <div style="display:flex; align-items:center; gap:0.5rem;">
-                        <div class="score-bar-track" style="width:60px;">
-                            <div class="score-bar-fill"
-                                 style="width:{{ analysis.match_score }}%">
-                            </div>
-                        </div>
-                        <span style="font-size:0.85rem; font-weight:600;">
-                            {{ analysis.match_score }}%
-                        </span>
-                    </div>
-                {% else %}
-                    <span style="color:#ccc; font-size:0.8rem;">not analysed</span>
-                {% endif %}
-            </td>
+    <!-- Status dot -->
+    <div style="width:8px; height:8px; border-radius:50%; flex-shrink:0;
+         background:
+         {% if job.status in ['offer'] %}#34d399
+         {% elif job.status in ['interview','ready','applied'] %}#a78bfa
+         {% elif job.status in ['assessed','preparing'] %}#fbbf24
+         {% elif job.status in ['rejected','ghosted'] %}#f87171
+         {% else %}rgba(255,255,255,0.2){% endif %};">
+    </div>
 
-            <td style="color:#888; font-size:0.85rem;">
-                {{ job.applied_at.strftime('%d %b %Y') }}
-            </td>
-            <td>
-                <a href="/jobs/{{ job.id }}/detail"
-                   class="btn btn-blue"
-                   style="font-size:0.8rem; padding:0.3rem 0.8rem;">
-                    View
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    <!-- Company and role -->
+    <div style="flex:1; min-width:0;">
+        <div style="font-weight:600; font-size:0.95rem;
+                    color:rgba(255,255,255,0.9);">
+            {{ job.company }}
+        </div>
+        <div style="font-size:0.8rem; color:rgba(255,255,255,0.4);
+                    margin-top:0.1rem;">
+            {{ job.role }} · {{ job.applied_at.strftime('%d %b %Y') }}
+        </div>
+    </div>
+
+    <!-- Status badge -->
+    <span class="badge badge-{{ job.status }}">{{ job.status }}</span>
+
+    <!-- Readiness score -->
+    <div style="width:100px;">
+        {% if job.readiness_score %}
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+            <div class="score-bar-track" style="flex:1;">
+                <div class="score-bar-fill
+                    {% if job.readiness_score >= 70 %}green
+                    {% elif job.readiness_score >= 50 %}amber
+                    {% endif %}"
+                    style="width:{{ job.readiness_score }}%">
+                </div>
+            </div>
+            <span style="font-size:0.78rem; font-weight:600; min-width:28px;
+                  color:{% if job.readiness_score >= 70 %}#34d399
+                        {% elif job.readiness_score >= 50 %}#fbbf24
+                        {% else %}#f87171{% endif %}">
+                {{ job.readiness_score }}%
+            </span>
+        </div>
+        {% else %}
+        <span style="font-size:0.75rem; color:rgba(255,255,255,0.2);">
+            not assessed
+        </span>
+        {% endif %}
+    </div>
+
+    <!-- Match score -->
+    {% if job.analysis %}
+    {% set analysis = job.analysis | fromjson %}
+    <div style="width:90px;">
+        <div style="display:flex; align-items:center; gap:0.4rem;">
+            <div class="score-bar-track" style="flex:1;">
+                <div class="score-bar-fill"
+                     style="width:{{ analysis.match_score }}%">
+                </div>
+            </div>
+            <span style="font-size:0.78rem; font-weight:600;
+                         min-width:28px; color:#a78bfa;">
+                {{ analysis.match_score }}%
+            </span>
+        </div>
+        <div style="font-size:0.68rem; color:rgba(255,255,255,0.25);
+                    margin-top:2px;">match</div>
+    </div>
+    {% else %}
+    <div style="width:90px;">
+        <span style="font-size:0.75rem; color:rgba(255,255,255,0.2);">
+            not analysed
+        </span>
+    </div>
+    {% endif %}
+
+    <!-- View button -->
+    <a href="/jobs/{{ job.id }}/detail" class="btn btn-primary"
+       style="font-size:0.78rem; padding:0.3rem 0.85rem; white-space:nowrap;">
+        View →
+    </a>
+
+    <!-- Delete -->
+    <button onclick="deleteJob({{ job.id }})"
+            style="background:none; border:none; color:rgba(248,113,113,0.4);
+                   cursor:pointer; font-size:0.85rem; padding:0.3rem;"
+            title="Delete">✕</button>
+</div>
+{% endfor %}
 
 {% else %}
-<div class="empty-state card">
+<div class="card empty-state">
+    <div style="font-size:2.5rem; margin-bottom:1rem; opacity:0.3;">✦</div>
     <h3>No applications yet</h3>
-    <p>Start by adding a job you're interested in — even before you apply.</p>
-    <br>
+    <p style="margin-bottom:1.5rem;">
+        Start by adding a job you're interested in — even before you decide to apply.
+    </p>
     <a href="/add-job" class="btn btn-primary">+ Add Your First Job</a>
 </div>
 {% endif %}
+
+<script>
+async function deleteJob(id) {
+    if (!confirm('Delete this application? This cannot be undone.')) return;
+    const res = await fetch(`/jobs/${id}`, { method: 'DELETE' });
+    if (res.ok) window.location.reload();
+}
+</script>
 
 {% endblock %}

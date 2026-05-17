@@ -1,135 +1,168 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div style="margin-bottom:1rem;">
-    <a href="/jobs/{{ job.id }}/detail"
-       style="color:#888; text-decoration:none; font-size:0.9rem;">
-        ← Back to {{ job.company }} — {{ job.role }}
-    </a>
+<a href="/jobs/{{ job.id }}/detail" class="back-link">
+    ← {{ job.company }} — {{ job.role }}
+</a>
+
+<div style="display:flex; justify-content:space-between;
+            align-items:flex-start; margin-bottom:1.5rem; flex-wrap:wrap;
+            gap:0.75rem;">
+    <div>
+        <h1 class="page-title" style="margin-bottom:0.25rem;">
+            Interview Simulator
+        </h1>
+        <p style="color:rgba(255,255,255,0.35); font-size:0.85rem;">
+            {{ questions | length }} questions tailored to your resume and this role
+        </p>
+    </div>
+    <div style="font-size:0.82rem; color:rgba(255,255,255,0.3);">
+        {{ job.company }} · {{ job.role }}
+    </div>
 </div>
 
-<h1 class="page-title">Interview Simulator</h1>
-<p style="color:#666; margin-bottom:0.5rem;">
-    {{ job.company }} — {{ job.role }}
-</p>
-<p style="color:#888; font-size:0.85rem; margin-bottom:1.5rem;">
-    {{ questions | length }} questions tailored to your resume and this role.
-    Click each question to reveal the answer guide.
-</p>
-
 {% for q in questions %}
-<div class="card" style="margin-bottom:1rem;" id="q{{ q.id }}">
+<div class="card" style="margin-bottom:0.75rem;" id="q{{ q.id }}">
     <div style="display:flex; justify-content:space-between;
-                align-items:flex-start; margin-bottom:0.8rem;">
-        <div style="display:flex; align-items:center; gap:0.8rem;">
-            <span style="background:#1a1a2e; color:#fff;
-                         padding:0.2rem 0.6rem; border-radius:20px;
-                         font-size:0.8rem; font-weight:600; white-space:nowrap;">
+                align-items:flex-start; margin-bottom:0.85rem;">
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="background:rgba(167,139,250,0.15);
+                         border:1px solid rgba(167,139,250,0.3);
+                         color:#a78bfa; font-size:0.75rem; font-weight:700;
+                         padding:0.2rem 0.65rem; border-radius:20px;">
                 Q{{ loop.index }}
             </span>
-            <span class="badge
-                {% if q.question_type == 'technical' %}badge-applied
-                {% elif q.question_type == 'fundamentals' %}badge-interview
-                {% elif q.question_type == 'project' %}badge-offer
-                {% elif q.question_type == 'situation' %}badge-ghosted
-                {% else %}badge-ghosted{% endif %}"
-                style="font-size:0.75rem;">
+            <span style="font-size:0.78rem; padding:0.2rem 0.65rem;
+                         border-radius:20px;
+                         {% if q.question_type == 'technical' %}
+                           background:rgba(96,165,250,0.12);
+                           color:#60a5fa;
+                           border:1px solid rgba(96,165,250,0.25)
+                         {% elif q.question_type == 'fundamentals' %}
+                           background:rgba(251,191,36,0.12);
+                           color:#fbbf24;
+                           border:1px solid rgba(251,191,36,0.25)
+                         {% elif q.question_type == 'project' %}
+                           background:rgba(52,211,153,0.12);
+                           color:#34d399;
+                           border:1px solid rgba(52,211,153,0.25)
+                         {% elif q.question_type == 'situation' %}
+                           background:rgba(167,139,250,0.12);
+                           color:#a78bfa;
+                           border:1px solid rgba(167,139,250,0.25)
+                         {% else %}
+                           background:rgba(255,255,255,0.05);
+                           color:rgba(255,255,255,0.35);
+                           border:1px solid rgba(255,255,255,0.1)
+                         {% endif %}">
                 {{ q.question_type }}
             </span>
         </div>
         {% if q.practiced %}
-        <span style="color:#065f46; font-size:0.8rem; font-weight:600;">
+        <span style="color:#34d399; font-size:0.8rem; font-weight:500;">
             ✔ Practiced
         </span>
         {% else %}
-        <button class="btn"
-                style="background:#f0f0f0; color:#444;
-                       font-size:0.8rem; padding:0.3rem 0.8rem;"
-                onclick="markPracticed({{ q.id }}, this)">
+        <button onclick="markPracticed({{ q.id }}, this)"
+                style="background:rgba(52,211,153,0.1);
+                       border:1px solid rgba(52,211,153,0.25);
+                       color:#34d399; font-size:0.78rem;
+                       padding:0.25rem 0.7rem; border-radius:6px;
+                       cursor:pointer;">
             Mark Practiced
         </button>
         {% endif %}
     </div>
 
-    <p style="font-weight:600; font-size:1rem; margin-bottom:0.8rem;
-              color:#1a1a2e;">
+    <p style="font-weight:600; font-size:0.95rem;
+              color:rgba(255,255,255,0.88); margin-bottom:0.85rem;
+              line-height:1.5;">
         {{ q.question_text }}
     </p>
 
     <!-- Answer guide (hidden by default) -->
     <div id="guide{{ q.id }}" style="display:none;">
-        <hr style="margin:0.8rem 0; border:none;
-                   border-top:1px solid #f0f0f0;">
-
+        <hr class="divider">
         <div style="display:grid; grid-template-columns:1fr 1fr;
-                    gap:1rem; font-size:0.9rem;">
+                    gap:1rem; font-size:0.875rem;">
             <div>
-                <p style="font-weight:500; color:#555; margin-bottom:0.4rem;">
-                    Why they ask this:
-                </p>
-                <p style="color:#444; margin-bottom:0.8rem;">
+                <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                            margin-bottom:0.4rem; font-weight:500;">
+                    Why they ask this
+                </div>
+                <p style="color:rgba(255,255,255,0.6); margin-bottom:0.85rem;
+                           line-height:1.6;">
                     {{ q.why_asked }}
                 </p>
-                <p style="font-weight:500; color:#555; margin-bottom:0.4rem;">
-                    Common mistake:
-                </p>
-                <p style="color:#991b1b; font-size:0.85rem;">
+                <div style="font-size:0.75rem; color:#f87171;
+                            margin-bottom:0.4rem; font-weight:500;">
+                    Common mistake
+                </div>
+                <p style="color:rgba(248,113,113,0.7); font-size:0.85rem;
+                           line-height:1.6;">
                     {{ q.common_mistake }}
                 </p>
             </div>
             <div>
-                <p style="font-weight:500; color:#555; margin-bottom:0.4rem;">
-                    Strong answer looks like:
-                </p>
-                <p style="color:#444; margin-bottom:0.8rem;">
+                <div style="font-size:0.75rem; color:rgba(255,255,255,0.4);
+                            margin-bottom:0.4rem; font-weight:500;">
+                    Strong answer looks like
+                </div>
+                <p style="color:rgba(255,255,255,0.6); margin-bottom:0.85rem;
+                           line-height:1.6;">
                     {{ q.answer_guide }}
                 </p>
-                <p style="font-weight:500; color:#555; margin-bottom:0.4rem;">
-                    Keywords to include:
-                </p>
+                <div style="font-size:0.75rem; color:#34d399;
+                            margin-bottom:0.4rem; font-weight:500;">
+                    Keywords to include
+                </div>
                 <div>
+                    {% if q.keywords %}
                     {% for kw in q.keywords.split(', ') %}
                     <span class="tag tag-green">{{ kw }}</span>
                     {% endfor %}
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 
     <button onclick="toggleGuide({{ q.id }}, this)"
-            style="background:none; border:none; color:#4cc9f0;
-                   cursor:pointer; font-size:0.85rem; margin-top:0.5rem;
-                   padding:0;">
+            style="background:none; border:none;
+                   color:rgba(167,139,250,0.6);
+                   cursor:pointer; font-size:0.82rem;
+                   margin-top:0.5rem; padding:0;">
         Show answer guide ▼
     </button>
 </div>
 {% endfor %}
 
-<div style="display:flex; gap:1rem; margin-top:1rem;">
-    <a href="/jobs/{{ job.id }}/detail" class="btn"
-       style="background:#f0f0f0; color:#444;">← Back to Job</a>
-    <a href="/" class="btn btn-primary">Done — Back to Dashboard</a>
+<div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
+    <a href="/jobs/{{ job.id }}/detail" class="btn btn-ghost">← Back to Job</a>
+    <a href="/" class="btn btn-primary">Done — Dashboard</a>
 </div>
 
 <script>
 function toggleGuide(id, btn) {
-    const guide = document.getElementById('guide' + id);
-    if (guide.style.display === 'none') {
-        guide.style.display = 'block';
+    const g = document.getElementById('guide' + id);
+    if (g.style.display === 'none') {
+        g.style.display = 'block';
         btn.textContent = 'Hide answer guide ▲';
+        btn.style.color = 'rgba(167,139,250,0.9)';
     } else {
-        guide.style.display = 'none';
+        g.style.display = 'none';
         btn.textContent = 'Show answer guide ▼';
+        btn.style.color = 'rgba(167,139,250,0.6)';
     }
 }
 
 async function markPracticed(id, btn) {
     const res = await fetch(`/intelligence/questions/${id}/practiced`,
-                            { method: 'PATCH' });
+                            { method:'PATCH' });
     if (res.ok) {
         btn.textContent = '✔ Practiced';
-        btn.style.background = '#d1fae5';
-        btn.style.color = '#065f46';
+        btn.style.background = 'rgba(52,211,153,0.15)';
+        btn.style.color = '#34d399';
         btn.disabled = true;
     }
 }
