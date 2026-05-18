@@ -13,8 +13,22 @@ import json
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Job, CompanyResearch, ReadinessAssessment, PrepRoadmap, InterviewQuestion
+from datetime import datetime, timedelta
+last_calls = {}
 
-
+def check_rate_limit(session_id: str):
+    """
+    Prevents one user from rapidly firing multiple AI calls.
+    10 second cooldown between any two AI requests per session.
+    """
+    now = datetime.utcnow()
+    last = last_calls.get(session_id)
+    if last and (now - last) < timedelta(seconds=10):
+        raise HTTPException(
+            status_code=429,
+            detail="Please wait a few seconds before running another analysis."
+        )
+    last_calls[session_id] = now
 router = APIRouter(prefix="/intelligence", tags=["intelligence"])
 
 
@@ -41,7 +55,7 @@ def research_job_company(job_id: int,request: Request,
     # Guard 2 — company name must exist
     if not job.company:
         raise HTTPException(status_code=400, detail="Job has no company name")
-
+    check_rate_limit(session_id)
     # Step 1 — check cache first
     cached = db.query(CompanyResearch).filter(
         CompanyResearch.company_name == job.company
@@ -122,6 +136,7 @@ def assess_job_readiness(job_id: int, request: Request,
             status_code=400,
             detail="No resume found. Upload your resume first."
         )
+    check_rate_limit(session_id)
 
     # Get company research if available (improves assessment quality)
     company_context = None
@@ -199,6 +214,8 @@ def generate_job_roadmap(job_id: int, request: Request,
         ReadinessAssessment.job_id == job_id
     ).order_by(ReadinessAssessment.assessed_at.desc()).first()
 
+    check_rate_limit(session_id)
+
     if not latest_assessment:
         raise HTTPException(
             status_code=400,
@@ -273,6 +290,8 @@ def simulate_interview(job_id: int, request: Request,
     if not job.resume_path or not os.path.exists(job.resume_path):
         raise HTTPException(status_code=400, detail="No resume found.")
 
+    check_rate_limit(session_id)
+
     # Get latest assessment for readiness context
     latest_assessment = db.query(ReadinessAssessment).filter(
         ReadinessAssessment.job_id == job_id
@@ -337,7 +356,7 @@ def mark_question_practiced(question_id: int, request: Request,
     ).first()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
-
+    check_rate_limit(session_id)
     question.practiced = True
     db.commit()
     return {"message": f"Question #{question_id} marked as practiced"}
@@ -360,7 +379,7 @@ def get_analytics(request: Request,
             "message": "Add at least 3 job applications to see patterns.",
             "total_jobs": len(all_jobs)
         }
-
+    check_rate_limit(session_id)
     # Build summary for AI analysis
     jobs_summary = []
     for job in all_jobs:
