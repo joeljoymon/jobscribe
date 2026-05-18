@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, Depends
+from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
-from app.database import engine, Base, SessionLocal, run_migrations
+from app.database import engine, Base, SessionLocal, run_migrations, get_db
 from app.models import Job
 from app.routers import jobs, intelligence
 from app.session import get_or_create_session_id
@@ -24,8 +25,10 @@ app = FastAPI(
     description="Track job applications with AI-powered resume analysis",
     version="2.0.0"
 )
+GA_TRACKING_ID = os.getenv("GA_TRACKING_ID", "")
 
 templates = Jinja2Templates(directory="templates")
+templates.env.globals["GA_TRACKING_ID"] = os.getenv("GA_TRACKING_ID", "")
 templates.env.filters["fromjson"] = json.loads
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.include_router(jobs.router)
@@ -251,3 +254,64 @@ def analytics_page(request: Request, response: Response):
         name="analytics.html",
         context={"analytics": analytics}
     )
+
+@app.get("/admin/stats")
+def admin_stats(db: Session = Depends(get_db)):
+    """
+    Quick stats endpoint — visit this URL to see
+    what's happening on your platform right now.
+    Bookmark it after your LinkedIn post goes live.
+    """
+    from app.models import UsageLog
+    from sqlalchemy import func
+
+    total_jobs     = db.query(Job).count()
+    total_sessions = db.query(Job.session_id).distinct().count()
+
+    # Events in last 24 hours
+    from datetime import datetime, timedelta
+    since = datetime.utcnow() - timedelta(hours=24)
+
+    recent_events = db.query(
+        UsageLog.event,
+        func.count(UsageLog.id).label("count")
+    ).filter(
+        UsageLog.created_at >= since
+    ).group_by(UsageLog.event).all()
+
+    # Most researched companies
+    top_companies = db.query(
+        UsageLog.company,
+        func.count(UsageLog.id).label("count")
+    ).filter(
+        UsageLog.event == "research_run",
+        UsageLog.company != None
+    ).group_by(
+        UsageLog.company
+    ).order_by(
+        func.count(UsageLog.id).desc()
+    ).limit(5).all()
+
+    # Unique sessions today
+    today = datetime.utcnow().replace(hour=0, minute=0,
+                                      second=0, microsecond=0)
+    sessions_today = db.query(
+        UsageLog.session_id
+    ).filter(
+        UsageLog.created_at >= today,
+        UsageLog.session_id != None
+    ).distinct().count()
+
+    return {
+        "total_jobs_in_db":     total_jobs,
+        "total_unique_users":   total_sessions,
+        "unique_users_today":   sessions_today,
+        "last_24h": {
+            event: count
+            for event, count in recent_events
+        },
+        "top_companies_researched": [
+            {"company": c, "count": n}
+            for c, n in top_companies
+        ]
+    }
